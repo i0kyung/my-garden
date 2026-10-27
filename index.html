@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>나의 정원</title>
+<meta name="description" content="꽃을 화분에 키우고, 손으로 정원에 심는 두 개의 연결된 웹 공간">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:32px 18px;
+    font-family:'Gowun Dodum',system-ui,sans-serif;color:#4a3f37;background:linear-gradient(#f7efe3,#eaf1e3)}
+  h1{font-weight:400;font-size:34px;text-align:center}
+  h1 small{display:block;font-size:14px;color:#8b7d70;margin-top:8px}
+  .cards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+  a.card{width:min(260px,88vw);background:rgba(255,251,245,.92);border:1px solid #eadfce;border-radius:22px;padding:24px 22px;
+    text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s}
+  a.card:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(120,95,60,.12)}
+  .card .em{font-size:34px}
+  .card h2{font-weight:400;font-size:21px;margin:8px 0 6px}
+  .card p{font-size:14px;color:#8b7d70;line-height:1.6}
+  .step{font-size:12px;color:#5e8c3a}
+  footer{font-size:13px;color:#8b7d70;text-align:center;line-height:1.8}
+  footer a{color:#c45a7a;text-decoration:none}
+</style>
+</head>
+<body>
+  <h1>나의 정원<small>내가 키운 꽃을, 내 손으로 심어요</small></h1>
+  <div class="cards">
+    <a class="card" href="room.html"><div class="step">STEP 1</div><div class="em">🪴</div><h2>키우기방</h2>
+      <p>화분 8개에 물을 주고 쓰다듬으며<br>씨앗부터 꽃이 필 때까지 키워요.</p></a>
+    <a class="card" href="garden.html"><div class="step">STEP 2</div><div class="em">✋</div><h2>손 정원</h2>
+      <p>카메라에 손을 비추고 엄지를 맞대면<br>키운 꽃이 손 높이만큼 피어나요.</p></a>
+  </div>
+  <footer>의견은 인스타 DM으로 · <a href="https://instagram.com/i0k.zip" target="_blank" rel="noopener">@i0k.zip</a><br>
+    <a href="https://qr.kakaopay.com/FZ946M6xm" target="_blank" rel="noopener">🌷 카카오페이로 후원하기</a></footer>
+</body>
+</html>

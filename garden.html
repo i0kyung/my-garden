@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>나의 정원 · 손 정원</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#4a3f37;--sub:#8b7d70;--card:rgba(255,251,245,.9);--line:#eadfce}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;color:var(--ink);font-family:'Gowun Dodum',system-ui,sans-serif;
+    background:linear-gradient(#f7efe3 0%,#eaf1e3 70%,#dfe9d4 100%);-webkit-tap-highlight-color:transparent}
+  #video{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:.42;transition:opacity .4s;filter:saturate(.8)}
+  body.nocam #video{opacity:0}
+  #gl,#ov{position:fixed;inset:0;width:100%;height:100%}
+  #ov{pointer-events:none}
+  #top{position:fixed;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:center;
+    padding:14px 18px;padding-top:max(14px,env(safe-area-inset-top));z-index:5;pointer-events:none}
+  #top h1{font-size:20px;font-weight:400}
+  #top h1 small{display:block;font-size:12px;color:var(--sub);margin-top:2px}
+  #top .r{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;pointer-events:auto}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px;
+    color:var(--ink);text-decoration:none;font-family:inherit;cursor:pointer;white-space:nowrap}
+  #hint{position:fixed;left:50%;top:78px;transform:translateX(-50%);font-size:14px;background:var(--card);
+    border:1px solid var(--line);padding:8px 16px;border-radius:999px;z-index:4;white-space:nowrap;transition:opacity .4s}
+  #legend{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:14px;z-index:5;
+    background:var(--card);border:1px solid var(--line);border-radius:18px;padding:9px 14px;font-size:12px}
+  #legend .side{display:flex;gap:6px;align-items:center}
+  #legend .side b{font-weight:400;color:var(--sub);margin-right:2px}
+  .fl{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border-radius:10px;padding:3px 4px;border:1px solid transparent}
+  .fl i{width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #d8cbb8}
+  .fl.lock{opacity:.4}
+  .fl.sel{border-color:#5e8c3a;background:#eef4e6}
+  #toast{position:fixed;left:50%;top:124px;transform:translate(-50%,-10px);opacity:0;background:#4a3f37;color:#fff;
+    padding:10px 16px;border-radius:999px;font-size:14px;transition:all .3s;z-index:9;pointer-events:none;white-space:nowrap}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  #gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;background:rgba(247,239,227,.85);backdrop-filter:blur(6px)}
+  #gate .box{background:#fffaf3;border:1px solid var(--line);border-radius:22px;padding:26px 24px;max-width:340px;text-align:center;line-height:1.65}
+  #gate h2{font-weight:400;font-size:22px;margin-bottom:8px}
+  #gate p{font-size:14px;color:var(--sub);margin-bottom:16px}
+  #gate button,#gate a{display:block;width:100%;font-family:inherit;font-size:15px;border:none;border-radius:14px;padding:12px;margin-top:8px;cursor:pointer;text-decoration:none}
+  #startCam{background:#5e8c3a;color:#fff}
+  #noCam,#toRoom{background:#efe5d7;color:var(--ink)}
+  #err{display:none;position:fixed;inset:0;align-items:center;justify-content:center;text-align:center;padding:30px;background:#f3e9dc;z-index:30;line-height:1.7}
+
+  #infoCard{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:40;background:rgba(74,63,55,.25)}
+  #infoCard.show{display:flex}
+  #infoCard .box{background:#fffaf3;border:1px solid #eadfce;border-radius:20px;padding:22px 22px 18px;width:min(320px,88vw);text-align:center;line-height:1.6;color:#4a3f37}
+  #infoCard h3{font-weight:400;font-size:18px;margin-bottom:4px}
+  #infoCard p{font-size:13px;color:#8b7d70}
+  #infoCard .row{margin-top:14px;padding-top:12px;border-top:1px dashed #eadfce;font-size:14px}
+  #infoCard a.insta{display:inline-block;margin-top:6px;color:#c45a7a;text-decoration:none;font-size:15px}
+  #infoCard .acc{font-size:15px;margin:4px 0 8px;letter-spacing:.02em}
+  #infoCard button{font-family:inherit;border:none;border-radius:12px;padding:9px 14px;cursor:pointer;font-size:13px}
+  #payLink{display:block;margin-top:10px;background:#ffe14d;color:#3c2f1f;border-radius:12px;padding:11px;text-decoration:none;font-size:14px}
+  #closeInfo{background:#efe5d7;color:#4a3f37;margin-top:14px;width:100%}
+</style>
+</head>
+<body>
+<video id="video" playsinline muted></video>
+<canvas id="gl"></canvas>
+<canvas id="ov"></canvas>
+<div id="err"><div>이 페이지는 로컬 서버나 GitHub Pages에서 열어야 해요.<br><small>VS Code의 Live Server로 열거나 GitHub에 올려서 확인해 주세요.</small></div></div>
+
+<div id="top">
+  <h1>나의 정원<small>손 정원 · <span id="cnt">0</span>송이</small></h1>
+  <div class="r">
+    <button class="chip" id="openInfo">💌</button>
+    <a class="chip" href="room.html">← 키우기방</a>
+    <button class="chip" id="camToggle">카메라 숨기기</button>
+    <button class="chip" id="swap">좌우 바꾸기</button>
+    <button class="chip" id="shot">📷 저장</button>
+    <button class="chip" id="clear">비우기</button>
+  </div>
+</div>
+<div id="hint">엄지를 다른 손가락 끝에 톡 맞대 보세요</div>
+<div id="legend"></div>
+<div id="toast"></div>
+
+<div id="gate"><div class="box">
+  <h2>손 정원</h2>
+  <p id="gateMsg">카메라에 두 손을 보여주세요.<br>엄지와 손가락을 맞대면 그 손가락의 꽃이<br>손 높이만큼 자라나요.</p>
+  <button id="startCam">카메라 켜고 시작하기</button>
+  <button id="noCam">카메라 없이 눌러서 심기</button>
+  <a id="toRoom" href="room.html">키우기방으로 가기</a>
+</div></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { FLOWERS, HAND_KO, FINGER_KO, loadState, saveState } from './flowers-data.js';
+
+if (location.protocol === 'file:') document.getElementById('err').style.display = 'flex';
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const state = loadState();
+state.garden = state.garden || [];
+const unlocked = id => params.has('all') || (state.plants[id] && state.plants[id].g >= 1); // ?all 은 테스트용
+const MAX_FLOWERS = 40;
+
+// ---------- 3D ----------
+const glCanvas = $('gl');
+const renderer = new THREE.WebGLRenderer({ canvas: glCanvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 20);
+camera.position.set(0, 0, 10);
+scene.add(new THREE.HemisphereLight('#fff6ea', '#b9a98f', 1.5));
+const sun = new THREE.DirectionalLight('#fff1dc', 2.1); sun.position.set(-2, 4, 6); scene.add(sun);
+scene.add(Object.assign(new THREE.DirectionalLight('#e8f0ff', 0.5), { position: new THREE.Vector3(3, 1, 4) }));
+
+const LEAF = new THREE.Color().setRGB(0.33, 0.55, 0.22, THREE.SRGBColorSpace);
+const matLeaf = new THREE.MeshStandardMaterial({ color: LEAF, roughness: 0.72 });
+const GROUND_Y = -0.8;
+let aspect = 1;
+
+// 땅
+const ground = new THREE.Group(); scene.add(ground);
+function buildGround() {
+  ground.children.slice().forEach(c => { ground.remove(c); c.geometry && c.geometry.dispose(); });
+  const w = aspect * 2 + 0.4;
+  const soil = new THREE.Mesh(new THREE.BoxGeometry(w, 0.4, 1.2), new THREE.MeshStandardMaterial({ color: new THREE.Color('#8a6446'), roughness: 1 }));
+  soil.position.set(0, GROUND_Y - 0.2, -0.2); ground.add(soil);
+  const lip = new THREE.Mesh(new THREE.BoxGeometry(w, 0.035, 1.2), new THREE.MeshStandardMaterial({ color: new THREE.Color('#6d8f45'), roughness: 0.9 }));
+  lip.position.set(0, GROUND_Y + 0.005, -0.2); ground.add(lip);
+  // 풀잎
+  const n = Math.round(w * 70);
+  const blade = new THREE.ConeGeometry(0.012, 0.07, 4); blade.translate(0, 0.035, 0);
+  const inst = new THREE.InstancedMesh(blade, matLeaf, n);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+  for (let i = 0; i < n; i++) {
+    e.set(0, 0, (Math.random() - 0.5) * 0.6); q.setFromEuler(e);
+    const s = 0.6 + Math.random() * 0.9;
+    m.compose(new THREE.Vector3(-w / 2 + Math.random() * w, GROUND_Y + 0.01, 0.35 + Math.random() * 0.1), q, new THREE.Vector3(s, s, s));
+    inst.setMatrixAt(i, m);
+  }
+  ground.add(inst);
+}
+
+function leafGeo(len, wid) {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0); s.quadraticCurveTo(wid, len * 0.38, 0, len); s.quadraticCurveTo(-wid, len * 0.38, 0, 0);
+  const g = new THREE.ExtrudeGeometry(s, { depth: 0.006, bevelEnabled: true, bevelThickness: 0.005, bevelSize: 0.005, bevelSegments: 2, curveSegments: 10 });
+  g.translate(0, 0, -0.003); return g;
+}
+const loader = new GLTFLoader(), modelCache = {};
+function getModel(f) {
+  if (!modelCache[f.id]) modelCache[f.id] = new Promise((res, rej) => loader.load(f.model, gl => {
+    gl.scene.traverse(o => { if (o.isMesh) o.material.roughness = 0.7; }); res(gl.scene);
+  }, undefined, rej));
+  return modelCache[f.id];
+}
+
+// ---------- 꽃 심기 ----------
+const planted = []; // {data, group, stem, curve, t, head}
+const fById = Object.fromEntries(FLOWERS.map(f => [f.id, f]));
+function plant(data, animate = true) {
+  const f = fById[data.id]; if (!f) return;
+  const x = data.x * aspect, topY = Math.max(GROUND_Y + 0.12, data.y - f.head * 0.95 * 0.45); // 꽃 가운데가 손끝에 오도록
+  const len = topY - GROUND_Y;
+  const g = new THREE.Group(); g.position.set(x, GROUND_Y, data.z); scene.add(g);
+  const sway = (Math.random() - 0.5) * 0.12;
+  const pts = []; for (let k = 0; k <= 10; k++) { const t = k / 10; pts.push(new THREE.Vector3(Math.sin(t * 2.2 + data.seed) * 0.03 * t + sway * t * t, t * len, 0)); }
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const stem = new THREE.Mesh(new THREE.TubeGeometry(curve, 40, 0.011, 8), matLeaf);
+  g.add(stem);
+  const leaves = [];
+  const nL = Math.max(1, Math.min(5, Math.floor(len / 0.28)));
+  for (let k = 0; k < nL; k++) {
+    const t = 0.18 + (k / Math.max(1, nL)) * 0.6, sd = (k + Math.round(data.seed * 10)) % 2 ? 1 : -1, sz = 0.85 + Math.random() * 0.4;
+    const l = new THREE.Mesh(leafGeo(0.17 * sz, 0.065 * sz), matLeaf);
+    l.position.copy(curve.getPoint(t)); l.rotation.set(-0.2, sd * 0.4, sd * (1.0 + Math.random() * 0.3));
+    l.userData.t = t; g.add(l); leaves.push(l);
+  }
+  const head = new THREE.Group(); head.position.copy(curve.getPoint(1)); head.rotation.x = 0.1; g.add(head);
+  getModel(f).then(m => { const c = m.clone(); c.scale.setScalar(f.head * 0.95); head.add(c); }).catch(() => {});
+  const item = { data, group: g, stem, leaves, head, top: curve.getPoint(1), t: animate ? 0 : 1.2 };
+  planted.push(item); applyGrow(item);
+  if (planted.length > MAX_FLOWERS) removeItem(planted[0]);
+  $('cnt').textContent = planted.length;
+}
+function applyGrow(it) {
+  const t = it.t, e = 1 - Math.pow(1 - Math.min(1, t / 0.75), 3);
+  it.stem.scale.y = Math.max(0.001, e);
+  it.leaves.forEach(l => l.scale.setScalar(THREE.MathUtils.clamp((e - l.userData.t) * 4, 0.001, 1)));
+  const hp = THREE.MathUtils.clamp((t - 0.6) / 0.6, 0, 1), he = hp === 1 ? 1 : 1 - Math.pow(2, -8 * hp) * Math.cos(hp * 8);
+  it.head.scale.setScalar(Math.max(0.001, he));
+  it.head.position.set(it.top.x, it.top.y * e, 0);
+}
+function removeItem(it) {
+  scene.remove(it.group);
+  it.stem.geometry.dispose(); it.leaves.forEach(l => l.geometry.dispose());
+  planted.splice(planted.indexOf(it), 1);
+  const i = state.garden.indexOf(it.data); if (i >= 0) state.garden.splice(i, 1);
+}
+function plantAndSave(id, sx, sy) {
+  const x = (sx / innerWidth * 2 - 1), y = 1 - sy / innerHeight * 2;
+  const data = { id, x, y, z: -0.3 + Math.random() * 0.6, seed: Math.random() * 6 };
+  state.garden.push(data); if (state.garden.length > MAX_FLOWERS) state.garden.shift();
+  saveState(state); plant(data);
+}
+
+// ---------- 화면 크기 ----------
+function resize() {
+  aspect = innerWidth / innerHeight;
+  renderer.setSize(innerWidth, innerHeight, false);
+  Object.assign(camera, { left: -aspect, right: aspect, top: 1, bottom: -1 }); camera.updateProjectionMatrix();
+  ov.width = innerWidth * devicePixelRatio; ov.height = innerHeight * devicePixelRatio;
+  buildGround();
+  planted.slice().forEach(it => { scene.remove(it.group); it.stem.geometry.dispose(); it.leaves.forEach(l => l.geometry.dispose()); });
+  planted.length = 0;
+  state.garden.forEach(d => plant(d, false));
+}
+const ov = $('ov'), ctx = ov.getContext('2d');
+
+// ---------- 범례 ----------
+const legend = $('legend');
+let selected = null;
+function buildLegend() {
+  legend.innerHTML = ['left', 'right'].map(h => `<div class="side"><b>${HAND_KO[h]}</b>${
+    FLOWERS.filter(f => f.hand === h).map(f => `<div class="fl ${unlocked(f.id) ? '' : 'lock'}" data-id="${f.id}" title="${FINGER_KO[f.finger]}"><i style="background:${unlocked(f.id) ? f.color : '#cfc4b4'}"></i>${f.name}</div>`).join('')
+  }</div>`).join('');
+  legend.querySelectorAll('.fl').forEach(el => el.onclick = () => {
+    const id = el.dataset.id;
+    if (!unlocked(id)) return toast(`${fById[id].name}은(는) 키우기방에서 먼저 피워 주세요`);
+    selected = selected === id ? null : id;
+    legend.querySelectorAll('.fl').forEach(e => e.classList.toggle('sel', e.dataset.id === selected));
+    if (selected) toast('화면을 눌러서 심어 보세요');
+  });
+}
+buildLegend();
+function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200); }
+
+// 카메라 없이: 눌러서 심기
+glCanvas.addEventListener('pointerdown', e => {
+  if (!selected) { if (!camOn) toast('아래에서 꽃을 먼저 골라 주세요'); return; }
+  plantAndSave(selected, e.clientX, e.clientY);
+});
+
+// ---------- 손 인식 ----------
+const video = $('video');
+let landmarker = null, camOn = false, lastVideoTime = -1;
+let swap = (() => { try { return localStorage.getItem('najungwon_swap') === '1'; } catch (e) { return false; } })();
+const TIPS = { index: 8, middle: 12, ring: 16, pinky: 20 };
+const handState = { left: { pinched: null, cool: 0 }, right: { pinched: null, cool: 0 } };
+const lockToastAt = {};
+
+async function startCamera() {
+  $('gateMsg').innerHTML = '손 인식 모델을 불러오는 중…';
+  try {
+    const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
+    const files = await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    landmarker = await vision.HandLandmarker.createFromOptions(files, {
+      baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate: 'GPU' },
+      runningMode: 'VIDEO', numHands: 2, minHandDetectionConfidence: 0.5, minTrackingConfidence: 0.5,
+    });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 1280, height: 720 } });
+    video.srcObject = stream; await video.play();
+    camOn = true; $('gate').remove();
+  } catch (err) {
+    console.error(err);
+    $('gateMsg').innerHTML = '카메라를 켤 수 없었어요.<br>권한을 확인하거나, 눌러서 심기로 즐겨 주세요.';
+  }
+}
+$('startCam').onclick = startCamera;
+$('noCam').onclick = () => { $('gate').remove(); document.body.classList.add('nocam'); $('hint').textContent = '아래에서 꽃을 고르고 화면을 눌러 심어요'; };
+$('camToggle').onclick = () => { const h = document.body.classList.toggle('nocam'); $('camToggle').textContent = h ? '카메라 보이기' : '카메라 숨기기'; };
+$('swap').onclick = () => { swap = !swap; try { localStorage.setItem('najungwon_swap', swap ? '1' : '0'); } catch (e) {} toast('왼손 ↔ 오른손을 바꿨어요'); };
+$('clear').onclick = () => {
+  if (!planted.length || !confirm('정원의 꽃을 모두 뽑을까요?')) return;
+  planted.slice().forEach(removeItem); state.garden = []; saveState(state); $('cnt').textContent = 0;
+};
+$('shot').onclick = () => {
+  const c = document.createElement('canvas'); c.width = glCanvas.width; c.height = glCanvas.height;
+  const x = c.getContext('2d'), gr = x.createLinearGradient(0, 0, 0, c.height);
+  gr.addColorStop(0, '#f7efe3'); gr.addColorStop(0.7, '#eaf1e3'); gr.addColorStop(1, '#dfe9d4');
+  x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height); x.drawImage(glCanvas, 0, 0);
+  const a = document.createElement('a'); a.download = '나의정원.png'; a.href = c.toDataURL('image/png'); a.click();
+};
+
+// 영상 좌표 → 화면 좌표 (object-fit: cover + 좌우 반전)
+function toScreen(p) {
+  const vw = video.videoWidth || 1280, vh = video.videoHeight || 720;
+  const s = Math.max(innerWidth / vw, innerHeight / vh), dw = vw * s, dh = vh * s;
+  return [(innerWidth - dw) / 2 + (1 - p.x) * dw, (innerHeight - dh) / 2 + p.y * dh];
+}
+
+function processHands(res) {
+  const dpr = devicePixelRatio;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, innerWidth, innerHeight);
+  if (!res || !res.landmarks) return;
+  const seen = {};
+  res.landmarks.forEach((lm, hi) => {
+    let label = res.handednesses?.[hi]?.[0]?.categoryName === 'Left' ? 'left' : 'right';
+    if (swap) label = label === 'left' ? 'right' : 'left';
+    if (seen[label]) return; seen[label] = true;
+    const hs = handState[label];
+    const scale = Math.hypot(lm[0].x - lm[9].x, lm[0].y - lm[9].y) || 0.1;
+    const thumb = lm[4];
+    // 가장 가까운 손가락
+    let best = null, bestD = 9;
+    Object.entries(TIPS).forEach(([fname, idx]) => {
+      const d = Math.hypot(thumb.x - lm[idx].x, thumb.y - lm[idx].y) / scale;
+      if (d < bestD) { bestD = d; best = fname; }
+    });
+    const flowerOf = fname => FLOWERS.find(f => f.hand === label && f.finger === fname);
+    // 손가락 끝 표시
+    Object.entries(TIPS).forEach(([fname, idx]) => {
+      const f = flowerOf(fname), [x, y] = toScreen(lm[idx]), on = unlocked(f.id);
+      ctx.beginPath(); ctx.arc(x, y, 9, 0, Math.PI * 2);
+      ctx.fillStyle = on ? f.color : 'rgba(200,190,175,.8)'; ctx.fill();
+      ctx.lineWidth = 2.5; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.font = '12px "Gowun Dodum", sans-serif'; ctx.fillStyle = on ? '#4a3f37' : '#9a8f82';
+      ctx.textAlign = 'center'; ctx.fillText(on ? f.name : '🌱', x, y - 15);
+    });
+    const [tx, ty] = toScreen(thumb);
+    ctx.beginPath(); ctx.arc(tx, ty, 6, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill();
+
+    // 맞댐 판정 (닿으면 0.22 미만, 떨어지면 0.36 초과)
+    const now = performance.now();
+    if (!hs.pinched && bestD < 0.22 && now > hs.cool) {
+      hs.pinched = best; hs.cool = now + 350;
+      const f = flowerOf(best), [px, py] = toScreen({ x: (thumb.x + lm[TIPS[best]].x) / 2, y: (thumb.y + lm[TIPS[best]].y) / 2 });
+      if (unlocked(f.id)) { plantAndSave(f.id, px, py); ring(px, py, f.color); $('hint').style.opacity = 0; }
+      else if (!lockToastAt[f.id] || now - lockToastAt[f.id] > 2500) { lockToastAt[f.id] = now; toast(`${f.name}은(는) 아직 안 피었어요. 키우기방에서 키워 주세요`); }
+    } else if (hs.pinched && bestD > 0.36) hs.pinched = null;
+  });
+  ['left', 'right'].forEach(h => { if (!seen[h]) handState[h].pinched = null; });
+}
+const rings = [];
+function ring(x, y, color) { rings.push({ x, y, color, t: 0 }); }
+
+// ---------- 루프 ----------
+const clock = new THREE.Clock();
+let latest = null;
+function loop() {
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  if (camOn && landmarker && video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+    lastVideoTime = video.currentTime;
+    latest = landmarker.detectForVideo(video, performance.now());
+  }
+  if (camOn) processHands(latest); else { ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0); ctx.clearRect(0, 0, innerWidth, innerHeight); }
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const r = rings[i]; r.t += dt;
+    ctx.beginPath(); ctx.arc(r.x, r.y, 10 + r.t * 70, 0, Math.PI * 2);
+    ctx.strokeStyle = r.color; ctx.globalAlpha = Math.max(0, 1 - r.t / 0.6); ctx.lineWidth = 3; ctx.stroke(); ctx.globalAlpha = 1;
+    if (r.t > 0.6) rings.splice(i, 1);
+  }
+  planted.forEach((it, i) => {
+    if (it.t < 1.2) { it.t += dt; applyGrow(it); }
+    it.group.rotation.z = Math.sin(t * 1.1 + it.data.seed) * 0.025;
+  });
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+addEventListener('resize', resize);
+resize(); loop();
+FLOWERS.filter(f => unlocked(f.id)).forEach(f => getModel(f).catch(() => {}));
+if (!FLOWERS.some(f => unlocked(f.id))) {
+  $('gateMsg').innerHTML = '아직 핀 꽃이 없어요.<br>키우기방에서 꽃을 먼저 피워 주세요 🌱';
+}
+</script>
+<div id="infoCard"><div class="box">
+  <h3>나의 정원</h3>
+  <p>만든 사람 · 민경</p>
+  <div class="row">의견은 인스타 DM으로 주세요 💌<br><a class="insta" href="https://instagram.com/i0k.zip" target="_blank" rel="noopener">@i0k.zip</a></div>
+  <div class="row">후원해 주시면 꽃이 더 많이 피어요 🌷<a id="payLink" href="https://qr.kakaopay.com/FZ946M6xm" target="_blank" rel="noopener">카카오페이로 후원하기</a></div>
+  <button id="closeInfo">닫기</button>
+</div></div>
+<script>
+(function(){
+  var c=document.getElementById('infoCard');
+  document.getElementById('openInfo').onclick=function(){c.classList.add('show')};
+  document.getElementById('closeInfo').onclick=function(){c.classList.remove('show')};
+  c.onclick=function(e){if(e.target===c)c.classList.remove('show')};
+})();
+</script>
+</body>
+</html>
