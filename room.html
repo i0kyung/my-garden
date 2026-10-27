@@ -3,111 +3,186 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>나의 정원 · 키우기방</title>
+<title>나의 정원 · 키우기 정원</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Jost:wght@400;500&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --ink:#4a3f37; --sub:#8b7d70; --card:rgba(255,251,245,.92); --line:#eadfce;
-    --leaf:#5e8c3a; --water:#5aa7d8; --pink:#e88aa2;
-  }
+  :root{--ink:#33433f;--sub:#62746f;--card:rgba(255,253,249,.9);--line:rgba(255,255,255,.75)}
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%;overflow:hidden;background:#f3e9dc;color:var(--ink);
-    font-family:'Gowun Dodum',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
-  canvas{display:block;touch-action:none}
-  #top{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;
-    padding:14px 18px;padding-top:max(14px,env(safe-area-inset-top));pointer-events:none;z-index:5}
-  #top h1{font-size:20px;font-weight:400;letter-spacing:.02em}
-  #top h1 small{display:block;font-size:12px;color:var(--sub);margin-top:2px}
-  #top .right{display:flex;gap:8px;align-items:center;pointer-events:auto}
-  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px;
-    color:var(--ink);text-decoration:none;font-family:inherit;cursor:pointer;white-space:nowrap}
-  .chip.go{background:#5e8c3a;color:#fff;border-color:#5e8c3a}
-  .chip.go.locked{background:#cbbfae;border-color:#cbbfae}
-  #tags{position:fixed;inset:0;pointer-events:none;z-index:3}
-  .tag{position:absolute;transform:translate(-50%,0);font-size:12px;color:var(--ink);background:var(--card);
-    border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap;transition:opacity .3s}
-  .tag b{font-weight:400;color:var(--sub);margin-left:4px}
-  .tag.thirsty{border-color:#9cc7e4}
-  #panel{position:fixed;left:50%;bottom:0;transform:translate(-50%,110%);width:min(440px,100%);
-    background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    border:1px solid var(--line);border-radius:22px 22px 0 0;padding:18px 20px;
-    padding-bottom:max(18px,env(safe-area-inset-bottom));transition:transform .45s cubic-bezier(.2,.8,.2,1);z-index:6}
-  #panel.show{transform:translate(-50%,0)}
-  #panel .head{display:flex;align-items:baseline;justify-content:space-between}
-  #panel h2{font-size:22px;font-weight:400}
-  #panel .mean{font-size:13px;color:var(--sub)}
-  .stages{display:flex;gap:4px;margin:12px 0 10px}
-  .stages span{flex:1;text-align:center;font-size:11px;padding:5px 0;border-radius:8px;background:#f1e8db;color:#b3a594}
-  .stages span.on{background:#5e8c3a;color:#fff}
-  .stages span.done{background:#cfe0bf;color:#5e7a46}
-  .bar{margin:7px 0}
-  .bar .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:4px}
-  .bar .track{position:relative;height:9px;border-radius:9px;background:#efe5d7;overflow:hidden}
-  .bar .fill{position:absolute;left:0;top:0;bottom:0;border-radius:9px;transition:width .5s}
-  .bar .zone{position:absolute;top:0;bottom:0;left:25%;width:58.3%;background:rgba(90,167,216,.15)}
-  #status{font-size:14px;margin:10px 0 12px;min-height:20px}
-  .acts{display:flex;gap:8px}
-  .acts button{flex:1;font-family:inherit;font-size:15px;border:none;border-radius:14px;padding:13px 0;cursor:pointer;color:#fff}
-  #btnWater{background:var(--water)} #btnPet{background:var(--pink)}
-  .acts button:active{transform:scale(.97)}
-  .nav{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-  .nav button{font-family:inherit;background:none;border:none;color:var(--sub);font-size:14px;cursor:pointer;padding:6px 4px}
-  #handNote{font-size:12px;color:#5e8c3a;margin-top:6px;display:none}
-  #toast{position:fixed;left:50%;top:84px;transform:translate(-50%,-20px);opacity:0;background:#4a3f37;color:#fff;
-    padding:10px 16px;border-radius:999px;font-size:14px;transition:all .35s;z-index:9;pointer-events:none;white-space:nowrap}
-  #toast.show{opacity:1;transform:translate(-50%,0)}
-  .fx{position:fixed;pointer-events:none;z-index:8;font-size:22px;transition:transform 1.2s ease-out,opacity 1.2s ease-out}
-  #loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-    background:#f3e9dc;z-index:20;transition:opacity .6s}
-  #loading .pg{width:140px;height:6px;border-radius:6px;background:#e6d9c6;overflow:hidden}
-  #loading .pg i{display:block;height:100%;width:0;background:#5e8c3a;transition:width .3s}
-  #hint{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);font-size:13px;color:var(--sub);z-index:4;
-    background:var(--card);padding:7px 14px;border-radius:999px;border:1px solid var(--line);transition:opacity .4s;white-space:nowrap}
-  #err{display:none;position:fixed;inset:0;align-items:center;justify-content:center;text-align:center;padding:30px;
-    background:#f3e9dc;z-index:30;line-height:1.7}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:'Gowun Dodum',system-ui,sans-serif;color:var(--ink);-webkit-tap-highlight-color:transparent;
+    background:linear-gradient(#d6f0e9,#86c1b5);user-select:none;-webkit-user-select:none}
+  #c{position:fixed;inset:0;width:100%;height:100%;touch-action:none;display:block}
+  body.water #c{cursor:crosshair}
 
-  #infoCard{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:40;background:rgba(74,63,55,.25)}
-  #infoCard.show{display:flex}
-  #infoCard .box{background:#fffaf3;border:1px solid #eadfce;border-radius:20px;padding:22px 22px 18px;width:min(320px,88vw);text-align:center;line-height:1.6;color:#4a3f37}
+  #top{position:fixed;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;
+    padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top));pointer-events:none;z-index:5}
+  #top h1{font-size:19px;font-weight:400}
+  #top h1 small{display:block;font-size:12px;color:var(--sub);margin-top:2px}
+  .chip{pointer-events:auto;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:14px;
+    color:var(--ink);text-decoration:none;font-family:inherit;cursor:pointer;box-shadow:0 2px 10px rgba(30,60,55,.08)}
+
+  /* 해 */
+  #sunbar{position:fixed;left:50%;top:max(8px,env(safe-area-inset-top));width:260px;height:86px;transform:translateX(-50%);z-index:6;touch-action:none;cursor:grab}
+  #sunbar svg{position:absolute;left:0;top:0;width:260px;height:62px;overflow:visible}
+  #sun{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,#fffbe6,#ffd34d 60%,#ffb02e);box-shadow:0 0 0 6px rgba(255,220,120,.28),0 0 26px rgba(255,200,90,.7)}
+  #sunLab{position:absolute;left:0;right:0;top:64px;text-align:center;font-size:12px;color:var(--ink);opacity:.85;white-space:nowrap}
+  @media (max-width:600px){ #sunbar{top:calc(max(8px,env(safe-area-inset-top)) + 46px);transform:translateX(-50%) scale(.85);transform-origin:top center} }
+
+  /* 아래 도구 */
+  #tools{position:fixed;left:50%;bottom:max(14px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:6px;z-index:6;
+    background:var(--card);border:1px solid var(--line);border-radius:22px;padding:6px;box-shadow:0 6px 24px rgba(30,60,55,.14)}
+  #tools button,#tools a{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:68px;padding:7px 8px;border:none;border-radius:16px;
+    background:transparent;font-family:inherit;font-size:12px;color:var(--ink);cursor:pointer;text-decoration:none;white-space:nowrap}
+  #tools span{font-size:22px;line-height:1}
+  #tools button:active,#tools a:active{transform:scale(.95)}
+  #tools .on{background:#5aa7d8;color:#fff}
+  #tools em{font-style:normal;color:var(--sub);font-size:11px;margin-left:2px}
+  #hint{position:fixed;left:50%;bottom:calc(max(14px,env(safe-area-inset-bottom)) + 92px);transform:translateX(-50%);font-size:13px;z-index:5;
+    background:rgba(255,253,249,.75);padding:5px 12px;border-radius:999px;max-width:calc(100vw - 24px);text-align:center;pointer-events:none;transition:opacity .3s}
+
+  /* 말풍선 */
+  #bubble{position:fixed;left:0;top:0;transform:translate(-50%,-100%);background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:7px 11px;font-size:13px;white-space:nowrap;z-index:4;pointer-events:none;opacity:0;transition:opacity .2s;box-shadow:0 4px 14px rgba(30,60,55,.12)}
+  #bubble.show{opacity:1}
+  #bubble b{font-weight:400;font-size:15px;margin-right:4px}
+  #bubble span{color:var(--sub);font-size:12px}
+  #bubble .mb{height:5px;border-radius:5px;background:#e3ece9;margin-top:5px;overflow:hidden}
+  #bubble .mb i{display:block;height:100%;background:#5aa7d8;border-radius:5px}
+  #bubble em{display:block;font-style:normal;font-size:12px;color:#3d82b8;margin-top:3px}
+
+  #toast{position:fixed;left:50%;top:110px;transform:translate(-50%,-10px);opacity:0;background:rgba(51,67,63,.92);color:#fff;padding:9px 16px;
+    border-radius:999px;font-size:14px;transition:all .3s;z-index:20;pointer-events:none;white-space:nowrap}
+  #toast.show{opacity:1;transform:translate(-50%,0)}
+  .fx{position:fixed;pointer-events:none;z-index:8;font-size:20px;transition:transform 1.1s ease-out,opacity 1.1s ease-out}
+
+  /* 도감 카드 */
+  .card{background:#fff;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden;display:flex;flex-direction:column}
+  .card .img{aspect-ratio:1;background-size:92% auto;background-position:center 60%;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center}
+  .card .lab{padding:9px 11px 11px;font-family:'Helvetica Neue',Arial,'Gowun Dodum',sans-serif;line-height:1.3}
+  .card .lab b{display:block;font-size:13px;letter-spacing:.02em;color:#222}
+  .card .lab i{display:block;font-size:11px;color:#444;margin-top:1px}
+  .card .lab span{display:block;font-family:'Gowun Dodum',sans-serif;font-size:13px;color:#222;margin-top:2px}
+  .card .lab small{color:#d9a400;margin-left:4px;font-size:11px}
+  .card .lab p{font-family:'Gowun Dodum',sans-serif;font-size:11px;color:#888;margin-top:2px}
+  .card.lock .img{background:#e6e4dd}
+  .card.lock .img span{font-size:40px;color:#c4c0b4;font-family:Arial,sans-serif}
+  .card.lock .lab b,.card.lock .lab span{color:#aaa}
+  .card.lock .lab small{color:#ccc}
+
+  .modal{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:rgba(40,60,56,.35);
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);padding:16px}
+  .modal.show{display:flex}
+  #dex .box{background:#cfdcd6;border-radius:20px;width:min(760px,100%);max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+  #dex .hd{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 10px}
+  #dex .hd h2{font-weight:400;font-size:20px}
+  #dex .hd h2 small{font-size:13px;color:var(--sub);margin-left:6px}
+  #dexGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px;padding:8px 18px 22px;overflow:auto}
+  @media (max-width:480px){ #dexGrid{grid-template-columns:repeat(2,1fr);gap:12px} }
+  #reveal .box{background:#cfdcd6;border-radius:22px;padding:22px;width:min(300px,100%);text-align:center}
+  #reveal h2{font-weight:400;font-size:18px;margin-bottom:14px;line-height:1.5}
+  #reveal .card{text-align:left;transform:rotate(-2deg);animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes pop{from{transform:scale(.6) rotate(-8deg);opacity:0}}
+  .btn{display:block;width:100%;margin-top:16px;border:none;border-radius:14px;padding:12px;font-family:inherit;font-size:15px;background:#4f7f5a;color:#fff;cursor:pointer}
+
+  #infoCard .box{background:#fffaf3;border-radius:20px;padding:22px 22px 18px;width:min(320px,100%);text-align:center;line-height:1.6}
   #infoCard h3{font-weight:400;font-size:18px;margin-bottom:4px}
-  #infoCard p{font-size:13px;color:#8b7d70}
-  #infoCard .row{margin-top:14px;padding-top:12px;border-top:1px dashed #eadfce;font-size:14px}
+  #infoCard p{font-size:13px;color:var(--sub)}
+  #infoCard .row{margin-top:14px;padding-top:12px;border-top:1px dashed #e2d8c8;font-size:14px}
   #infoCard a.insta{display:inline-block;margin-top:6px;color:#c45a7a;text-decoration:none;font-size:15px}
-  #infoCard .acc{font-size:15px;margin:4px 0 8px;letter-spacing:.02em}
-  #infoCard button{font-family:inherit;border:none;border-radius:12px;padding:9px 14px;cursor:pointer;font-size:13px}
   #payLink{display:block;margin-top:10px;background:#ffe14d;color:#3c2f1f;border-radius:12px;padding:11px;text-decoration:none;font-size:14px}
-  #closeInfo{background:#efe5d7;color:#4a3f37;margin-top:14px;width:100%}
+  #closeInfo{background:#efe5d7;color:var(--ink);margin-top:14px}
+
+  #loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:40;
+    background:linear-gradient(#d6f0e9,#86c1b5);transition:opacity .6s}
+  #err{display:none;position:fixed;inset:0;align-items:center;justify-content:center;text-align:center;padding:30px;background:#d6f0e9;z-index:50;line-height:1.7}
+
+  /* ---- 에디토리얼 타입 시스템 ---- */
+  :root{--ink:#1c1f1d;--sub:#5f625c;--card:rgba(246,241,231,.95);--line:rgba(28,31,29,.14);--rose:#c4566f;--paper:#f4efe6}
+  body{font-family:'Gowun Batang',serif;-webkit-font-smoothing:antialiased}
+  #top h1 a{color:var(--ink);text-decoration:none;pointer-events:auto}
+  #top h1{font-family:'Anton',sans-serif;font-weight:400;font-size:28px;line-height:.95;letter-spacing:.005em;text-transform:uppercase}
+  #top h1 small{font-family:'Jost','Gowun Batang',sans-serif;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink);opacity:.72;margin-top:7px;line-height:1.4}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;font-family:'Jost','Gowun Batang',sans-serif;font-size:12px;letter-spacing:.1em;color:var(--ink);box-shadow:none}
+  .cap{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.22em;text-transform:uppercase}
+  #toast{background:rgba(28,31,29,.92);font-family:'Gowun Batang',serif;border-radius:6px;font-size:14px}
+  .btn,#gate #startCam,#intro button{background:var(--ink)!important;color:var(--paper)!important;font-family:'Jost','Gowun Batang',sans-serif!important;letter-spacing:.12em;border-radius:8px!important}
+  .modal .box,#gate .box,#picker .box{background:var(--paper)!important}
+  #infoCard h3,#gate h2{font-family:'Anton',sans-serif;font-weight:400;font-size:30px;text-transform:uppercase;letter-spacing:.01em}
+  #infoCard a.insta{color:var(--rose);font-family:'Jost',sans-serif;letter-spacing:.06em}
+  #payLink{border-radius:8px!important}
+
+  #sunLab{font-family:'Jost','Gowun Batang',sans-serif;font-size:11px;letter-spacing:.08em;color:var(--ink)}
+  #tools{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:5px;gap:2px;box-shadow:0 8px 30px rgba(28,31,29,.12)}
+  #tools button,#tools a{border-radius:10px;min-width:74px;font-family:'Gowun Batang',serif;font-size:12.5px;gap:4px;padding:8px 8px 7px}
+  #tools svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+  #tools .on{background:var(--ink);color:var(--paper)}
+  #tools em{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.06em;color:var(--rose)}
+  #hint{font-family:'Gowun Batang',serif;background:var(--card);border:1px solid var(--line);font-size:12.5px}
+  #bubble{font-family:'Gowun Batang',serif;border-radius:8px;border:1px solid var(--line);background:var(--card)}
+  #bubble b{font-weight:700}
+  #bubble .mb i{background:#3d82b8}
+  #dex .hd h2{font-family:'Anton',sans-serif;font-weight:400;font-size:30px;text-transform:uppercase;letter-spacing:.01em}
+  #dex .hd h2 small{font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.22em;color:var(--rose);margin-left:10px}
+  #dex .hd p{font-family:'Gowun Batang',serif;font-size:12px;color:var(--sub);margin-top:2px}
+  #reveal h2{font-family:'Gowun Batang',serif;font-weight:700;font-size:17px}
+  #reveal .cap{color:var(--rose);margin-bottom:6px}
+  .card{border-radius:2px}
+  .card .img,.card .lab{flex:none}
+  #dexGrid{grid-auto-rows:max-content;align-content:start}
+  .card .lab b{font-family:'Jost',sans-serif;font-weight:500;letter-spacing:.14em;font-size:12px}
+  .card .lab i{font-family:'Gowun Batang',serif}
+  .card .lab span,.card .lab p{font-family:'Gowun Batang',serif}
+  #loading{font-family:'Jost',sans-serif;letter-spacing:.28em;text-transform:uppercase;font-size:12px;background:var(--paper)!important;color:var(--ink)}
+  #loading b{font-family:'Anton',sans-serif;font-weight:400;font-size:46px;letter-spacing:.01em}
 </style>
 </head>
 <body>
-<div id="loading"><div>정원을 준비하는 중…</div><div class="pg"><i></i></div></div>
-<div id="err"><div>이 페이지는 로컬 서버나 GitHub Pages에서 열어야 해요.<br><small>VS Code의 Live Server로 열거나 GitHub에 올려서 확인해 주세요.</small></div></div>
+<canvas id="c"></canvas>
+<div id="loading"><b>MY GARDEN</b>정원을 준비하는 중</div>
+<div id="err"><div>이 페이지는 로컬 서버나 GitHub Pages에서 열어야 해요.</div></div>
 
 <div id="top">
-  <h1>나의 정원<small>키우기방</small></h1>
-  <div class="right">
-    <button class="chip" id="openInfo">💌</button>
-    <span class="chip" id="count">0 / 8</span>
-    <a class="chip go locked" id="goGarden" href="garden.html">손 정원 →</a>
-  </div>
+  <h1><a href="index.html">My Garden</a><small>01 — Grow · 키우기 정원</small></h1>
+  <button class="chip" id="openInfo" title="만든 사람">Info</button>
 </div>
-<div id="tags"></div>
-<div id="hint">화분을 눌러서 돌봐 주세요</div>
 
-<div id="panel">
-  <div class="head"><h2 id="pName">튤립</h2><span class="mean" id="pMean"></span></div>
-  <div class="stages" id="pStages"></div>
-  <div class="bar"><div class="lab"><span>성장</span><span id="gTxt">0%</span></div>
-    <div class="track"><div class="fill" id="gFill" style="background:#7fae55"></div></div></div>
-  <div class="bar"><div class="lab"><span>흙 촉촉함</span><span id="mTxt"></span></div>
-    <div class="track"><div class="zone"></div><div class="fill" id="mFill" style="background:var(--water)"></div></div></div>
-  <div id="status"></div>
-  <div class="acts"><button id="btnWater">💧 물주기</button><button id="btnPet">🤲 쓰다듬기</button></div>
-  <div id="handNote"></div>
-  <div class="nav"><button id="prev">‹ 이전</button><button id="back">선반으로</button><button id="next">다음 ›</button></div>
+<div id="sunbar" title="해를 끌어서 시간을 바꿔요">
+  <svg viewBox="0 0 260 62"><path d="M14 56 Q130 -18 246 56" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-dasharray="3 6" stroke-linecap="round"/></svg>
+  <div id="sun"></div>
+  <div id="sunLab"></div>
 </div>
+
+<div id="hint"></div>
+<div id="tools">
+  <button id="tSeed"><svg viewBox="0 0 24 24"><path d="M12 3c4 3 6 7 6 10a6 6 0 0 1-12 0c0-3 2-7 6-10z"/><path d="M12 9v9"/></svg>씨앗 뿌리기</button>
+  <button id="tWater"><svg viewBox="0 0 24 24"><path d="M4 10h11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M15 12l5-5"/><path d="M19 5l2 2"/><path d="M6 10a3.5 3.5 0 0 1 7 0"/></svg>물뿌리개</button>
+  <button id="tDex"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M9 8h6"/></svg><div>도감 <em id="dexCount"></em></div></button>
+  <a id="tHand" href="garden.html"><svg viewBox="0 0 24 24"><path d="M8 12V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 10V4a1.5 1.5 0 0 1 3 0v7"/><path d="M14 10.5V6a1.5 1.5 0 0 1 3 0v8a7 7 0 0 1-7 7 6 6 0 0 1-5-3l-2.5-4a1.5 1.5 0 0 1 2.5-1.6L8 15"/></svg>손 정원</a>
+</div>
+
+<div id="bubble"></div>
 <div id="toast"></div>
+
+<div class="modal" id="dex"><div class="box">
+  <div class="hd"><div><h2>Flower Index<small id="dexSub"></small></h2><p>피워낸 꽃이 한 장씩 모여요</p></div><button class="chip" id="dexClose">닫기</button></div>
+  <div id="dexGrid"></div>
+</div></div>
+
+<div class="modal" id="reveal"><div class="box">
+  <div class="cap" id="revealCap">New Flower</div><h2 id="revealTitle"></h2>
+  <div id="revealCard"></div>
+  <button class="btn" id="revealOk">도감에 담기</button>
+</div></div>
+
+<div class="modal" id="infoCard"><div class="box">
+  <h3>My Garden</h3>
+  <p>만든 사람 · 민경</p>
+  <div class="row">의견은 인스타 DM으로 주세요 💌<br><a class="insta" href="https://instagram.com/i0k.zip" target="_blank" rel="noopener">@i0k.zip</a></div>
+  <div class="row">후원해 주시면 꽃이 더 많이 피어요 🌷<a id="payLink" href="https://qr.kakaopay.com/FZ946M6xm" target="_blank" rel="noopener">카카오페이로 후원하기</a></div>
+  <button class="btn" id="closeInfo">닫기</button>
+</div></div>
 
 <script type="importmap">
 { "imports": {
@@ -118,140 +193,116 @@
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { FLOWERS, HAND_KO, FINGER_KO, loadState, saveState } from './flowers-data.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { FLOWERS, byId, loadState, saveState, pickSeed } from './flowers-data.js';
 
-if (location.protocol === 'file:') document.getElementById('err').style.display = 'flex';
+const $ = id => document.getElementById(id);
+if (location.protocol === 'file:') $('err').style.display = 'flex';
+const FAST = new URLSearchParams(location.search).has('fast') ? 8 : 1; // ?fast : 테스트용 8배속
+const BED_R = 1.45, SOIL_Y = 0.42, MAX_PLANTS = 30, PS = 1.35; // PS: 식물 크기
+const STAGES = ['씨앗', '새싹', '줄기', '봉오리', '꽃'];
+const stageOf = g => g < 0.1 ? 0 : g < 0.35 ? 1 : g < 0.7 ? 2 : g < 1 ? 3 : 4;
+const clamp01 = v => Math.min(1, Math.max(0, v));
 
-// ---------- 성장 규칙 ----------
-const FAST = new URLSearchParams(location.search).has('fast') ? 20 : 1; // ?fast 붙이면 테스트용 빠른 성장
-const DRY_PER_MIN = 0.08 * FAST;     // 흙이 마르는 속도
-const GROW_PER_MIN = 0.015 * FAST;   // 적당히 촉촉할 때 저절로 자라는 양
-const WATER_ADD = 0.34, WATER_GROW = 0.10, PET_GROW = 0.012;
-const WET_MIN = 0.25, WET_MAX = 1.0;
-const STAGES = ['씨앗', '새싹', '줄기', '봉오리', '개화'];
-const stageOf = g => g < 0.08 ? 0 : g < 0.3 ? 1 : g < 0.65 ? 2 : g < 1 ? 3 : 4;
-
+// ---------- 상태 ----------
 const state = loadState();
-const now = () => Date.now();
-FLOWERS.forEach(f => {
-  if (!state.plants[f.id]) state.plants[f.id] = { g: 0, m: 0.5, love: 0, t: now() };
-});
-function tickPlant(p, minutes) {
-  if (minutes <= 0) return;
-  // 수분이 적정 범위에 머문 시간만큼 자람
-  const m0 = p.m, m1 = Math.max(0, m0 - DRY_PER_MIN * minutes);
-  const hi = Math.min(m0, WET_MAX), lo = Math.max(m1, WET_MIN);
-  const goodMin = hi > lo ? (hi - lo) / DRY_PER_MIN : 0;
-  if (p.g < 1) p.g = Math.min(1, p.g + GROW_PER_MIN * goodMin);
-  p.m = m1;
+let giftId = null;
+if (state.gift) {
+  giftId = state.gift; delete state.gift;
+  state.plants.push({ uid: state.uid++, id: giftId, x: 0.1, z: 0.25, g: 1, m: 0.6 });
 }
-FLOWERS.forEach(f => { const p = state.plants[f.id]; tickPlant(p, Math.min((now() - p.t) / 60000, 60 * 24 * 3)); p.t = now(); });
-saveState(state);
+// 해 위치: 0 아침 · 0.5 한낮 · 1 저녁
+function sunInfo(t) {
+  const k = Math.sin(Math.PI * t);
+  return { k, phase: t < 0.3 ? '아침' : t < 0.7 ? '한낮' : '저녁', grow: 0.65 + 0.35 * k, dry: 0.12 + 0.33 * k };
+}
+const GROW = 0.0035; // 촉촉할 때 1초에 자라는 양
+function tick(p, sec, si) {
+  if (sec <= 0) return;
+  const dps = si.dry / 60 * FAST;
+  const wet = Math.max(0, Math.min(sec, (p.m - 0.1) / dps));
+  if (p.g < 1) p.g = Math.min(1, p.g + GROW * si.grow * FAST * wet);
+  p.m = Math.max(0, p.m - dps * sec);
+}
+{ // 자리를 비운 동안의 시간
+  const away = Math.min((Date.now() - (state.t || Date.now())) / 1000, 6 * 3600);
+  const si = sunInfo(state.sun);
+  state.plants.forEach(p => tick(p, away, si));
+  state.t = Date.now(); saveState(state);
+}
 
 // ---------- 장면 ----------
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.NeutralToneMapping;
-document.body.prepend(renderer.domElement);
-
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#f3e9dc');
-const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.05, 50);
+scene.fog = new THREE.Fog('#86c1b5', 7, 15);
+const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 60);
+const controls = new OrbitControls(camera, canvas);
+Object.assign(controls, { enablePan: false, enableDamping: true, dampingFactor: 0.08, rotateSpeed: 0.6,
+  minPolarAngle: 0.45, maxPolarAngle: 1.22, minAzimuthAngle: -0.9, maxAzimuthAngle: 0.9 });
+controls.target.set(0, SOIL_Y + 0.22, 0);
 
-scene.add(new THREE.HemisphereLight('#fff6ea', '#c9b7a0', 1.4));
-const sun = new THREE.DirectionalLight('#fff1dc', 2.2);
-sun.position.set(-3, 5, 4); sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 5, bottom: -2, near: 0.5, far: 20 });
-sun.shadow.radius = 4; sun.shadow.bias = -0.0005;
-scene.add(sun);
-const fill = new THREE.DirectionalLight('#e8f0ff', 0.5); fill.position.set(3, 2, 3); scene.add(fill);
+const hemi = new THREE.HemisphereLight('#fffaf0', '#5f817b', 1.2); scene.add(hemi);
+const sun = new THREE.DirectionalLight('#ffffff', 2.2);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -2.4, right: 2.4, top: 2.4, bottom: -2.4, near: 0.5, far: 20 });
+sun.shadow.bias = -0.0006; sun.shadow.radius = 3;
+scene.add(sun, sun.target);
 
-const srgb = c => new THREE.Color(c);
-const LEAF_COLOR = new THREE.Color().setRGB(0.33, 0.55, 0.22, THREE.SRGBColorSpace);
-const matLeaf = new THREE.MeshStandardMaterial({ color: LEAF_COLOR, roughness: 0.72 });
-const matSeed = new THREE.MeshStandardMaterial({ color: srgb('#7a5638'), roughness: 0.9 });
-
-// 벽지 (은은한 세로 줄무늬)
-function wallTexture() {
-  const c = document.createElement('canvas'); c.width = 256; c.height = 256;
-  const x = c.getContext('2d'); x.fillStyle = '#f4ebdf'; x.fillRect(0, 0, 256, 256);
-  x.fillStyle = 'rgba(214,196,170,.18)'; for (let i = 0; i < 256; i += 32) x.fillRect(i, 0, 12, 256);
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(10, 6);
+// 큰 화분 (밤하늘색 점무늬)
+function canvasTex(w, h, draw, rx = 1, ry = 1) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry);
   t.colorSpace = THREE.SRGBColorSpace; return t;
 }
-const wall = new THREE.Mesh(new THREE.PlaneGeometry(30, 18), new THREE.MeshStandardMaterial({ map: wallTexture(), roughness: 1 }));
-wall.position.set(0, 3, -0.55); wall.receiveShadow = true; scene.add(wall);
-
-// 창문
-const win = new THREE.Group();
-const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.3), new THREE.MeshBasicMaterial({ color: '#fffaf0' }));
-win.add(glass);
-const frameMat = new THREE.MeshStandardMaterial({ color: srgb('#e9dccb'), roughness: 0.8 });
-[[0, 0.68, 1.75, 0.07], [0, -0.68, 1.75, 0.07], [-0.84, 0, 0.07, 1.43], [0.84, 0, 0.07, 1.43], [0, 0, 0.04, 1.3], [0, 0, 1.6, 0.04]]
-  .forEach(([x, y, w, h]) => { const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.05), frameMat); b.position.set(x, y, 0.02); win.add(b); });
-win.position.set(-1.6, 2.6, -0.54); scene.add(win);
-
-// ---------- 선반 ----------
-const shelves = new THREE.Group(); scene.add(shelves);
-const woodMat = new THREE.MeshStandardMaterial({ color: srgb('#c9a37c'), roughness: 0.75 });
-function buildShelves(rows, width) {
-  shelves.clear();
-  rows.forEach(y => {
-    const plank = new THREE.Mesh(new THREE.BoxGeometry(width, 0.06, 0.6), woodMat);
-    plank.position.set(0, y - 0.03, 0); plank.castShadow = plank.receiveShadow = true; shelves.add(plank);
-    [-1, 1].forEach(s => {
-      const br = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.22, 0.35), woodMat);
-      br.position.set(s * (width / 2 - 0.3), y - 0.17, -0.3); shelves.add(br);
-    });
-  });
+const potTex = canvasTex(512, 256, (x, w, h) => {
+  x.fillStyle = '#2e3b57'; x.fillRect(0, 0, w, h); x.fillStyle = 'rgba(255,255,255,.8)';
+  for (let i = 0; i < 240; i++) { x.beginPath(); x.arc(Math.random() * w, Math.random() * h, 1 + Math.random() * 2.2, 0, 7); x.fill(); }
+}, 4, 1);
+const potPts = [[0, -0.7], [1.3, -0.7], [1.34, -0.66], [1.58, 0.44], [1.62, 0.5], [1.6, 0.54], [1.5, 0.54], [1.49, 0.44]];
+const pot = new THREE.Mesh(new THREE.LatheGeometry(potPts.map(([r, y]) => new THREE.Vector2(r, y)), 96),
+  new THREE.MeshStandardMaterial({ map: potTex, roughness: 0.85, side: THREE.DoubleSide }));
+pot.castShadow = pot.receiveShadow = true; scene.add(pot);
+const soilTex = canvasTex(512, 512, (x, w, h) => {
+  x.fillStyle = '#7d5c41'; x.fillRect(0, 0, w, h);
+  for (let i = 0; i < 500; i++) {
+    x.fillStyle = Math.random() < 0.5 ? 'rgba(60,40,26,.18)' : 'rgba(170,135,100,.16)';
+    x.beginPath(); x.arc(Math.random() * w, Math.random() * h, 3 + Math.random() * 14, 0, 7); x.fill();
+  }
+}, 2, 2);
+const soil = new THREE.Mesh(new THREE.CircleGeometry(1.5, 72), new THREE.MeshStandardMaterial({ map: soilTex, roughness: 1 }));
+soil.rotation.x = -Math.PI / 2; soil.position.y = SOIL_Y; soil.receiveShadow = true; scene.add(soil);
+{ // 자갈
+  const n = 60, peb = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(0.03, 0),
+    new THREE.MeshStandardMaterial({ color: '#a38a72', roughness: 1 }), n);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion();
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * 7, r = 0.2 + Math.sqrt(Math.random()) * 1.22, s = 0.4 + Math.random();
+    q.setFromEuler(new THREE.Euler(Math.random() * 3, Math.random() * 3, 0));
+    m.compose(new THREE.Vector3(Math.cos(a) * r, SOIL_Y, Math.sin(a) * r), q, new THREE.Vector3(s, s * 0.6, s));
+    peb.setMatrixAt(i, m);
+  }
+  peb.receiveShadow = true; scene.add(peb);
 }
 
-// ---------- 화분 ----------
-const POTS = {
-  classic: { h: 0.31, soil: [0.125, 0.28], p: [[0, 0], [0.11, 0], [0.135, 0.255], [0.152, 0.265], [0.152, 0.31], [0.136, 0.31], [0.128, 0.27], [0.12, 0.2]] },
-  belly:   { h: 0.33, soil: [0.105, 0.30], p: [[0, 0], [0.08, 0], [0.145, 0.08], [0.163, 0.17], [0.135, 0.28], [0.112, 0.305], [0.122, 0.33], [0.108, 0.33], [0.1, 0.3]] },
-  cup:     { h: 0.25, soil: [0.13, 0.215], p: [[0, 0], [0.07, 0], [0.12, 0.03], [0.148, 0.1], [0.155, 0.2], [0.15, 0.25], [0.137, 0.25], [0.138, 0.2]] },
-  small:   { h: 0.22, soil: [0.093, 0.195], p: [[0, 0], [0.078, 0], [0.098, 0.175], [0.112, 0.185], [0.112, 0.22], [0.098, 0.22], [0.092, 0.19]] },
-  tall:    { h: 0.42, soil: [0.1, 0.39], p: [[0, 0], [0.11, 0], [0.114, 0.4], [0.118, 0.42], [0.104, 0.42], [0.1, 0.38]] },
-  flask:   { h: 0.35, soil: [0.075, 0.335], p: [[0, 0], [0.135, 0], [0.128, 0.03], [0.06, 0.27], [0.05, 0.3], [0.1, 0.33], [0.112, 0.35], [0.09, 0.35], [0.06, 0.32]] },
-  bucket:  { h: 0.3, soil: [0.135, 0.275], p: [[0, 0], [0.1, 0], [0.152, 0.29], [0.156, 0.3], [0.14, 0.3], [0.132, 0.27]] },
-  dish:    { h: 0.13, soil: [0.16, 0.105], p: [[0, 0], [0.13, 0], [0.17, 0.04], [0.185, 0.12], [0.188, 0.13], [0.172, 0.13], [0.165, 0.1]] },
-};
-const potGroups = [];
-FLOWERS.forEach((f, i) => {
-  const def = POTS[f.pot];
-  const g = new THREE.Group(); g.userData.idx = i;
-  const pot = new THREE.Mesh(
-    new THREE.LatheGeometry(def.p.map(([r, y]) => new THREE.Vector2(r, y)), 56),
-    new THREE.MeshStandardMaterial({ color: srgb(f.potColor), roughness: 0.82, side: THREE.DoubleSide }));
-  pot.castShadow = pot.receiveShadow = true; g.add(pot);
-  const soil = new THREE.Mesh(new THREE.CircleGeometry(def.soil[0], 40),
-    new THREE.MeshStandardMaterial({ color: srgb('#8a6446'), roughness: 1 }));
-  soil.rotation.x = -Math.PI / 2; soil.position.y = def.soil[1]; soil.receiveShadow = true; g.add(soil);
-  // 흙 알갱이
-  for (let k = 0; k < 14; k++) {
-    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * def.soil[0] * 0.9;
-    const c = new THREE.Mesh(new THREE.SphereGeometry(0.008 + Math.random() * 0.007, 6, 5), soil.material);
-    c.position.set(Math.cos(a) * r, def.soil[1] + 0.002, Math.sin(a) * r); g.add(c);
-  }
-  const plant = new THREE.Group(); plant.position.y = def.soil[1]; g.add(plant);
-  g.userData = { idx: i, soil, plant, def, wobble: 0, built: -1 };
-  scene.add(g); potGroups.push(g);
-});
-
-// ---------- 식물 만들기 ----------
-function leafGeo(len, wid, thick = 0.004) {
+// ---------- 식물 ----------
+const LEAF = new THREE.Color().setRGB(0.33, 0.55, 0.22, THREE.SRGBColorSpace);
+const matLeaf = new THREE.MeshStandardMaterial({ color: LEAF, roughness: 0.75 });
+const matBud = new THREE.MeshStandardMaterial({ color: new THREE.Color().setRGB(0.45, 0.66, 0.32, THREE.SRGBColorSpace), roughness: 0.7 });
+const matSeed = new THREE.MeshStandardMaterial({ color: '#6b4a2f', roughness: 0.9 });
+const hitMat = new THREE.MeshBasicMaterial({ visible: false });
+const seedGeo = new THREE.SphereGeometry(0.024, 12, 8); seedGeo.scale(1, 0.62, 0.8); seedGeo.userData.keep = true;
+const wetGeo = new THREE.CircleGeometry(0.17, 28); wetGeo.userData.keep = true;
+function leafGeo(len, wid) {
   const s = new THREE.Shape();
   s.moveTo(0, 0); s.quadraticCurveTo(wid, len * 0.38, 0, len); s.quadraticCurveTo(-wid, len * 0.38, 0, 0);
-  const g = new THREE.ExtrudeGeometry(s, { depth: thick, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.004, bevelSegments: 2, curveSegments: 10 });
-  g.translate(0, 0, -thick / 2); return g;
+  const g = new THREE.ExtrudeGeometry(s, { depth: 0.004, bevelEnabled: true, bevelThickness: 0.004, bevelSize: 0.004, bevelSegments: 2, curveSegments: 10 });
+  g.translate(0, 0, -0.002); return g;
 }
-const modelCache = {};
-const loader = new GLTFLoader();
+const loader = new GLTFLoader(), modelCache = {};
 function getModel(f) {
   if (!modelCache[f.id]) modelCache[f.id] = new Promise((res, rej) => loader.load(f.model, gl => {
     gl.scene.traverse(o => { if (o.isMesh) { o.castShadow = true; o.material.roughness = 0.7; } });
@@ -259,321 +310,393 @@ function getModel(f) {
   }, undefined, rej));
   return modelCache[f.id];
 }
-const disposeTree = o => o.traverse(c => { if (c.geometry && !c.userData.shared) c.geometry.dispose(); });
 
-function buildPlant(i, animateBloom = false) {
-  const f = FLOWERS[i], p = state.plants[f.id], G = potGroups[i], plant = G.userData.plant;
-  plant.children.slice().forEach(c => { plant.remove(c); disposeTree(c); });
-  const g = p.g, st = stageOf(g);
-  const sad = p.m < 0.12 ? 1 : p.m > WET_MAX ? 0.6 : 0; // 시들 정도
-  G.userData.built = Math.round(g * 200);
+const objs = [];
+function addObj(p, fall) {
+  const group = new THREE.Group(); group.position.set(p.x, SOIL_Y, p.z); group.scale.setScalar(PS);
+  const plantG = new THREE.Group(); group.add(plantG);
+  const wet = new THREE.Mesh(wetGeo, new THREE.MeshStandardMaterial({ color: '#3a2618', transparent: true, opacity: 0, roughness: 1, depthWrite: false }));
+  wet.rotation.x = -Math.PI / 2; wet.position.y = 0.004; group.add(wet);
+  const o = { p, group, plantG, wet, built: -1, stage: -1, wob: 0, head: null, sd: (p.uid * 1.37) % 6.28, h: 0.1 };
+  group.userData.obj = o; scene.add(group); objs.push(o);
+  buildPlant(o, false);
+  if (fall) { o.fallY = 1.3 + Math.random() * 0.5; o.fallV = 0; plantG.position.y = o.fallY; }
+  return o;
+}
+function disposeChildren(G) {
+  G.children.slice().forEach(c => { G.remove(c); c.traverse(x => { if (x.geometry && !x.geometry.userData.keep && !x.userData.model) x.geometry.dispose(); }); });
+}
+function buildPlant(o, animBloom) {
+  const p = o.p, f = byId[p.id], G = o.plantG, g = p.g, st = stageOf(g), sd = o.sd;
+  disposeChildren(G);
+  o.built = Math.round(g * 50); o.stage = st; o.head = null;
+  let h = 0.06;
   if (st === 0) {
-    const seed = new THREE.Mesh(new THREE.SphereGeometry(0.022, 12, 8), matSeed);
-    seed.scale.set(1, 0.6, 0.8); seed.position.y = 0.006; seed.castShadow = true; plant.add(seed); return;
+    const s = new THREE.Mesh(seedGeo, matSeed); s.position.y = 0.012; s.rotation.y = sd; s.castShadow = true; G.add(s);
+  } else {
+    const sproutT = clamp01((g - 0.1) / 0.25), growT = clamp01((g - 0.35) / 0.35), budT = clamp01((g - 0.7) / 0.3);
+    const len = 0.05 + 0.1 * sproutT + Math.max(0, f.stem - 0.15) * growT;
+    const pts = []; for (let k = 0; k <= 8; k++) { const t = k / 8; pts.push(new THREE.Vector3(Math.sin(t * 2.4 + sd) * 0.025 * t, t * len, Math.cos(t * 2 + sd) * 0.012 * t)); }
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const stem = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.006 + 0.006 * Math.min(1, g * 1.4), 7), matLeaf);
+    stem.castShadow = true; G.add(stem);
+    const cp = curve.getPoint(Math.min(len, 0.15) / len), cs = 0.5 + 0.5 * sproutT;
+    [-1, 1].forEach(s => {
+      const l = new THREE.Mesh(leafGeo(0.07 * cs, 0.05 * cs), matLeaf);
+      l.position.copy(cp); l.rotation.set(-0.25, s * 0.35 + sd, s * 1.25); l.castShadow = true; G.add(l);
+    });
+    const n = growT > 0 ? 1 + Math.floor(growT * 3.2) : 0;
+    for (let k = 0; k < n; k++) {
+      const t = 0.32 + k * 0.17, s = k % 2 ? 1 : -1, sz = 0.6 + 0.4 * Math.min(1, growT * 1.5);
+      const l = new THREE.Mesh(leafGeo(0.11 * sz, 0.042 * sz), matLeaf);
+      l.position.copy(curve.getPoint(Math.min(t, 0.85))); l.rotation.set(-0.15, s * 0.5 + sd + k, s * 0.95); l.castShadow = true; G.add(l);
+    }
+    const top = curve.getPoint(1);
+    if (st === 3) { // 정체를 숨긴 초록 봉오리
+      const s = 0.028 + 0.042 * budT, bud = new THREE.Group();
+      const b = new THREE.Mesh(new THREE.SphereGeometry(s, 18, 12), matBud); b.scale.set(0.75, 1.3, 0.75); b.position.y = s; b.castShadow = true; bud.add(b);
+      const sep = new THREE.Mesh(new THREE.SphereGeometry(s * 0.62, 12, 8), matLeaf); sep.scale.set(1, 0.6, 1); bud.add(sep);
+      bud.position.copy(top); G.add(bud);
+    }
+    if (st === 4) {
+      const holder = new THREE.Group(); holder.position.copy(top); G.add(holder); o.head = holder;
+      if (animBloom) { holder.scale.setScalar(0.01); o.bloomAnim = 0; }
+      getModel(f).then(m => {
+        if (holder.parent !== G) return;
+        const c = m.clone(); c.scale.setScalar(f.head); c.rotation.x = 0.12; c.traverse(x => x.userData.model = true); holder.add(c);
+      }).catch(() => {});
+    }
+    h = len + (st === 4 ? f.head : st === 3 ? 0.1 : 0.05);
   }
-  const sproutT = THREE.MathUtils.clamp((g - 0.08) / 0.22, 0, 1);
-  const growT = THREE.MathUtils.clamp((g - 0.3) / 0.35, 0, 1);
-  const budT = THREE.MathUtils.clamp((g - 0.65) / 0.35, 0, 1);
-  const len = 0.05 + 0.1 * sproutT + Math.max(0, f.stem - 0.15) * growT;
-  const bend = 0.025 + sad * 0.05;
-  const pts = []; for (let k = 0; k <= 8; k++) { const t = k / 8; pts.push(new THREE.Vector3(Math.sin(t * 2.4 + i) * bend * t, t * len * (1 - sad * 0.12), -sad * 0.06 * t * t)); }
-  const curve = new THREE.CatmullRomCurve3(pts);
-  const stem = new THREE.Mesh(new THREE.TubeGeometry(curve, 24, 0.0055 + 0.006 * Math.min(1, g * 1.4), 8), matLeaf);
-  stem.castShadow = true; plant.add(stem);
-  const top = curve.getPoint(1);
-  // 떡잎
-  const cotH = Math.min(len, 0.15) / len;
-  const cp = curve.getPoint(cotH), cs = 0.5 + 0.5 * sproutT;
-  [-1, 1].forEach(sd => {
-    const l = new THREE.Mesh(leafGeo(0.07 * cs, 0.05 * cs), matLeaf);
-    l.position.copy(cp); l.rotation.set(-0.25 - sad * 0.5, sd * 0.35, sd * (1.25 + sad * 0.4)); l.castShadow = true; plant.add(l);
-  });
-  // 본잎
-  const n = growT > 0 ? 1 + Math.floor(growT * 3.2) : 0;
-  for (let k = 0; k < n; k++) {
-    const t = 0.32 + k * 0.17, sd = k % 2 ? 1 : -1, sz = 0.6 + 0.4 * Math.min(1, growT * 1.5);
-    const l = new THREE.Mesh(leafGeo(0.11 * sz, 0.042 * sz), matLeaf);
-    l.position.copy(curve.getPoint(Math.min(t, 0.85))); l.rotation.set(-0.15 - sad * 0.6, sd * 0.5, sd * (0.95 + sad * 0.5)); l.castShadow = true; plant.add(l);
-  }
-  // 봉오리
-  if (st === 3) {
-    const bud = new THREE.Group();
-    const s = 0.03 + 0.045 * budT;
-    const petal = new THREE.Mesh(new THREE.SphereGeometry(s, 20, 14),
-      new THREE.MeshStandardMaterial({ color: LEAF_COLOR.clone().lerp(new THREE.Color(f.color), 0.25 + 0.6 * budT), roughness: 0.7 }));
-    petal.scale.set(0.75, 1.25, 0.75); petal.position.y = s * 0.9; petal.castShadow = true; bud.add(petal);
-    const sep = new THREE.Mesh(new THREE.SphereGeometry(s * 0.62, 14, 10), matLeaf); sep.scale.set(1, 0.6, 1); bud.add(sep);
-    bud.position.copy(top); bud.rotation.x = sad * 0.5; plant.add(bud);
-  }
-  // 개화
-  if (st === 4) {
-    const holder = new THREE.Group(); holder.position.copy(top); holder.rotation.x = 0.12 + sad * 0.45; plant.add(holder);
-    G.userData.head = holder;
-    getModel(f).then(m => {
-      if (holder.parent !== plant) return;
-      const c = m.clone(); c.scale.setScalar(f.head); holder.add(c);
-      if (animateBloom) { holder.scale.setScalar(0.01); G.userData.bloomAnim = 0; }
-    }).catch(() => {});
-  }
+  o.h = h;
+  const hit = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, h + 0.08, 8), hitMat); hit.position.y = (h + 0.08) / 2; G.add(hit);
 }
-
-// ---------- 배치 & 카메라 ----------
-let layout = null;
-const view = { pos: new THREE.Vector3(), tgt: new THREE.Vector3(), curPos: new THREE.Vector3(), curTgt: new THREE.Vector3() };
-function fitDistance(w, h) {
-  const v = THREE.MathUtils.degToRad(camera.fov) / 2;
-  return Math.max(h / 2 / Math.tan(v), w / 2 / (Math.tan(v) * camera.aspect));
+function refreshPlant(o) {
+  const st = stageOf(o.p.g);
+  if (st === o.stage && Math.round(o.p.g * 50) === o.built) return;
+  const was = o.stage;
+  buildPlant(o, st === 4 && was < 4);
+  if (st === 4 && was < 4) bloomed(o);
+  if (bubbleObj === o) renderBubble();
 }
-function doLayout() {
-  const portrait = innerWidth / innerHeight < 0.95;
-  const cols = portrait ? 4 : 8, gap = portrait ? 0.56 : 0.6;
-  const rows = portrait ? [1.75, 0] : [0];
-  potGroups.forEach((G, i) => {
-    const r = Math.floor(i / cols), c = i % cols;
-    G.position.set((c - (cols - 1) / 2) * gap, rows[r], 0);
-  });
-  const width = cols * gap + 0.35;
-  buildShelves(rows, width);
-  const h = portrait ? 3.5 : 1.75, w = width + 0.2;
-  const cy = portrait ? 1.45 : 0.68;
-  layout = { portrait, shelfPos: new THREE.Vector3(0, cy + 0.25, fitDistance(w, h) * 1.08 + 0.3), shelfTgt: new THREE.Vector3(0, cy, 0) };
-  if (focusIdx < 0) setShelfView(); else setFocus(focusIdx, true);
+function bloomed(o) {
+  const f = byId[o.p.id];
+  if (!state.owned.includes(f.id)) { state.owned.push(f.id); saveState(state); queueReveal(f, 'new'); }
+  else toast(`🌸 ${f.name}이(가) 피었어요`);
+  updateDexCount();
 }
-function setShelfView() { view.pos.copy(layout.shelfPos); view.tgt.copy(layout.shelfTgt); }
-
-// ---------- UI ----------
-const $ = id => document.getElementById(id);
-const tagsEl = $('tags');
-const tags = FLOWERS.map(f => { const d = document.createElement('div'); d.className = 'tag'; tagsEl.appendChild(d); return d; });
-$('pStages').innerHTML = STAGES.map(s => `<span>${s}</span>`).join('');
-let focusIdx = -1;
-
-function refreshUI() {
-  const bloomed = FLOWERS.filter(f => state.plants[f.id].g >= 1).length;
-  $('count').textContent = `🌸 ${bloomed} / 8`;
-  $('goGarden').classList.toggle('locked', bloomed === 0);
-  FLOWERS.forEach((f, i) => {
-    const p = state.plants[f.id], st = stageOf(p.g);
-    tags[i].innerHTML = `${f.name}<b>${st === 4 ? '🌸' : STAGES[st]}</b>`;
-    tags[i].classList.toggle('thirsty', p.m < 0.12 && st < 4);
-  });
-  if (focusIdx < 0) return;
-  const f = FLOWERS[focusIdx], p = state.plants[f.id], st = stageOf(p.g);
-  $('pName').textContent = f.name; $('pMean').textContent = '꽃말 · ' + f.meaning;
-  [...$('pStages').children].forEach((s, k) => s.className = k === st ? 'on' : k < st ? 'done' : '');
-  $('gFill').style.width = (p.g * 100).toFixed(1) + '%'; $('gTxt').textContent = Math.floor(p.g * 100) + '%';
-  $('mFill').style.width = Math.min(100, p.m / 1.2 * 100) + '%';
-  $('mTxt').textContent = p.m < 0.12 ? '바싹 말랐어요' : p.m < WET_MIN ? '조금 말랐어요' : p.m > WET_MAX ? '너무 축축해요' : '딱 좋아요';
-  let s;
-  if (st === 4) s = `활짝 피었어요! 사랑을 ${p.love}번 받았어요 💗`;
-  else if (p.m < 0.12) s = '목이 말라서 잎이 축 처졌어요. 물을 주세요 💧';
-  else if (p.m > WET_MAX) s = '물이 너무 많아요. 흙이 마를 때까지 기다려 주세요';
-  else if (p.m < WET_MIN) s = '흙이 말라가요. 슬슬 물을 줄 때예요';
-  else s = ['씨앗이 흙 속에서 꿈틀거려요', '작은 떡잎이 올라왔어요', '줄기가 쑥쑥 자라는 중이에요', '곧 꽃이 필 것 같아요!'][st];
-  $('status').textContent = s;
-  const hn = $('handNote');
-  if (st === 4) { hn.style.display = 'block'; hn.textContent = `✋ 손 정원에서 ${HAND_KO[f.hand]} ${FINGER_KO[f.finger]}로 심을 수 있어요`; }
-  else hn.style.display = 'none';
-}
-
-function setFocus(i, instant) {
-  focusIdx = i;
-  const G = potGroups[i], f = FLOWERS[i];
-  const h = G.userData.def.h + f.stem + f.head + 0.1;
-  const tgt = G.position.clone().add(new THREE.Vector3(0, h * 0.5 - (layout.portrait ? h * 0.38 : 0.05), 0));
-  const d = fitDistance(1.1, h * (layout.portrait ? 1.9 : 1.35));
-  view.tgt.copy(tgt); view.pos.copy(tgt).add(new THREE.Vector3(0, 0.25, d));
-  $('panel').classList.add('show'); $('hint').style.opacity = 0;
-  if (!instant) refreshUI();
-}
-function clearFocus() { focusIdx = -1; setShelfView(); $('panel').classList.remove('show'); }
-$('back').onclick = clearFocus;
-$('prev').onclick = () => { setFocus((focusIdx + 7) % 8); refreshUI(); };
-$('next').onclick = () => { setFocus((focusIdx + 1) % 8); refreshUI(); };
-
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
-function screenOf(v) { const p = v.clone().project(camera); return [(p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight]; }
-function floatFx(txt, x, y) {
-  const d = document.createElement('div'); d.className = 'fx'; d.textContent = txt;
-  d.style.left = x - 11 + (Math.random() - 0.5) * 50 + 'px'; d.style.top = y + 'px'; document.body.appendChild(d);
-  requestAnimationFrame(() => { d.style.transform = `translateY(-${70 + Math.random() * 40}px)`; d.style.opacity = 0; });
-  setTimeout(() => d.remove(), 1300);
-}
-
-// ---------- 물주기 ----------
-const can = new THREE.Group();
-{
-  const cm = new THREE.MeshStandardMaterial({ color: srgb('#9cc9c0'), roughness: 0.55, metalness: 0.1 });
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.13, 28), cm); can.add(body);
-  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.014, 0.17, 10), cm);
-  spout.position.set(-0.11, 0.03, 0); spout.rotation.z = Math.PI / 2.8; can.add(spout);
-  const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.012, 0.02, 14), cm);
-  rose.position.set(-0.185, 0.085, 0); rose.rotation.z = Math.PI / 2.8; can.add(rose);
-  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.009, 8, 20, Math.PI), cm);
-  handle.position.set(0.05, 0.06, 0); handle.rotation.z = -0.4; can.add(handle);
-  can.traverse(o => o.castShadow = true);
-}
-can.visible = false; scene.add(can);
-const drops = [];
-const dropGeo = new THREE.SphereGeometry(0.006, 6, 5); dropGeo.userData = {};
-const dropMat = new THREE.MeshStandardMaterial({ color: srgb('#8cc8f0'), transparent: true, opacity: 0.85, roughness: 0.2 });
-let canAnim = null;
-
-function water() {
-  if (focusIdx < 0 || canAnim) return;
-  const f = FLOWERS[focusIdx], p = state.plants[f.id];
-  const before = p.m, prevSt = stageOf(p.g);
-  p.m = Math.min(1.25, p.m + WATER_ADD);
-  if (p.g < 1) p.g = Math.min(1, p.g + (before < 0.95 ? WATER_GROW : 0));
-  p.t = now();
-  canAnim = { i: focusIdx, t: 0, over: before >= 0.95, prevSt };
+function removeObj(o) {
+  scene.remove(o.group); disposeChildren(o.plantG); o.wet.material.dispose();
+  objs.splice(objs.indexOf(o), 1); state.plants.splice(state.plants.indexOf(o.p), 1);
+  if (bubbleObj === o) hideBubble();
   saveState(state);
 }
-function pet() {
-  if (focusIdx < 0) return;
-  const G = potGroups[focusIdx], f = FLOWERS[focusIdx], p = state.plants[f.id];
-  if (now() - (G.userData.lastPet || 0) < 600) return;
-  G.userData.lastPet = now();
-  const prev = stageOf(p.g);
-  p.love++; if (p.g < 1) p.g = Math.min(1, p.g + PET_GROW);
-  G.userData.wobble = 1;
-  const [x, y] = screenOf(G.position.clone().add(new THREE.Vector3(0, G.userData.def.h + 0.2, 0)));
-  for (let k = 0; k < 3; k++) setTimeout(() => floatFx(['💗', '💕', '✨'][k], x, y), k * 120);
-  saveState(state); afterGrowth(focusIdx, prev);
-}
-$('btnWater').onclick = water; $('btnPet').onclick = pet;
 
-function afterGrowth(i, prevStage, force) {
-  const f = FLOWERS[i], p = state.plants[f.id], st = stageOf(p.g);
-  if (force || st !== prevStage || Math.abs(Math.round(p.g * 200) - potGroups[i].userData.built) >= 2) buildPlant(i, st === 4 && prevStage < 4);
-  if (st === 4 && prevStage < 4) { p.bloomedAt = now(); saveState(state); toast(`🌸 ${f.name}이(가) 피었어요! 손 정원에 심을 수 있어요`); }
-  else if (st !== prevStage) toast(`${f.name} · ${STAGES[st]} 단계가 되었어요`);
-  refreshUI();
+// ---------- 씨앗 뿌리기 ----------
+function scatter() {
+  const room = MAX_PLANTS - objs.length;
+  if (room <= 0) return toast('정원이 가득 찼어요. 꽃을 화분 밖으로 끌어내 정리해요');
+  const n = Math.min(room, 3 + Math.floor(Math.random() * 3));
+  for (let i = 0; i < n; i++) {
+    let x = 0, z = 0;
+    for (let tries = 0; tries < 40; tries++) {
+      const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * (BED_R - 0.18);
+      x = Math.cos(a) * r; z = Math.sin(a) * r;
+      if (objs.every(o => Math.hypot(o.p.x - x, o.p.z - z) > 0.32)) break;
+    }
+    const p = { uid: state.uid++, id: pickSeed(state.owned), x, z, g: 0, m: 0.35 };
+    state.plants.push(p);
+    setTimeout(() => { addObj(p, true); setHint(); }, i * 110);
+  }
+  saveState(state);
+  toast(`씨앗 ${n}개를 뿌렸어요. 무슨 꽃이 필까요?`);
+}
+
+// ---------- 해 ----------
+const KEY = { top: ['#f7d2bd', '#d6f0e9', '#f4ad84'], bottom: ['#a8d0c8', '#86c1b5', '#7f8fb5'], light: ['#ffd6b8', '#fff8ec', '#ffb184'] };
+const _a = new THREE.Color(), _b = new THREE.Color();
+function lerp3(arr, t) {
+  const [i, u] = t < 0.5 ? [0, t * 2] : [1, (t - 0.5) * 2];
+  return _a.set(arr[i]).lerp(_b.set(arr[i + 1]), u).clone();
+}
+function applySun() {
+  const t = state.sun, si = sunInfo(t);
+  const top = lerp3(KEY.top, t), bot = lerp3(KEY.bottom, t);
+  document.body.style.background = `linear-gradient(${top.getStyle()}, ${bot.getStyle()})`;
+  scene.fog.color.copy(bot);
+  sun.color.copy(lerp3(KEY.light, t));
+  const a = Math.PI * (1 - t);
+  sun.position.set(Math.cos(a) * 5, 1.2 + 4.5 * si.k, 2.6); sun.intensity = 1.4 + 1.1 * si.k;
+  hemi.intensity = 0.95 + 0.45 * si.k;
+  const s = $('sun'); s.style.left = (14 + 232 * t) + 'px'; s.style.top = (56 - 148 * t * (1 - t)) + 'px';
+  $('sunLab').textContent = si.phase === '한낮' ? '한낮 · 햇살 듬뿍, 쑥쑥 자라요' : `${si.phase} · 물이 오래 촉촉해요`;
+}
+{
+  const bar = $('sunbar'); let dragging = false;
+  const move = e => { const r = bar.getBoundingClientRect(); state.sun = clamp01(((e.clientX - r.left) / r.width * 260 - 14) / 232); applySun(); };
+  bar.addEventListener('pointerdown', e => { dragging = true; bar.setPointerCapture(e.pointerId); bar.style.cursor = 'grabbing'; move(e); });
+  bar.addEventListener('pointermove', e => dragging && move(e));
+  bar.addEventListener('pointerup', () => { dragging = false; bar.style.cursor = ''; saveState(state); });
+}
+
+// ---------- 물뿌리개 ----------
+const can = new THREE.Group();
+{
+  const cm = new THREE.MeshStandardMaterial({ color: '#9cc9c0', roughness: 0.5, metalness: 0.1 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.085, 0.13, 24), cm); can.add(body);
+  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.014, 0.17, 10), cm); spout.position.set(-0.11, 0.03, 0); spout.rotation.z = Math.PI / 2.8; can.add(spout);
+  const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.012, 0.02, 14), cm); rose.position.set(-0.185, 0.085, 0); rose.rotation.z = Math.PI / 2.8; can.add(rose);
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.009, 8, 20, Math.PI), cm); handle.position.set(0.05, 0.06, 0); handle.rotation.z = -0.4; can.add(handle);
+  can.traverse(x => x.castShadow = true);
+}
+can.visible = false; scene.add(can);
+const drops = [], dropGeo = new THREE.SphereGeometry(0.007, 6, 5);
+const dropMat = new THREE.MeshStandardMaterial({ color: '#8cc8f0', transparent: true, opacity: 0.85, roughness: 0.2 });
+const canTarget = new THREE.Vector3(); let watering = false, canTilt = 0;
+function waterPlant(o, dt) {
+  const p = o.p, before = p.m;
+  p.m = Math.min(1, p.m + dt * 1.6);
+  if (!o.boosted && before < 0.6 && p.g < 1) { o.boosted = true; p.g = Math.min(1, p.g + 0.06); floatAt(o, '💧'); refreshPlant(o); }
 }
 
 // ---------- 입력 ----------
-const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
-let downAt = null;
-renderer.domElement.addEventListener('pointerdown', e => downAt = [e.clientX, e.clientY]);
-renderer.domElement.addEventListener('pointerup', e => {
-  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 8) return;
-  ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
-  ray.setFromCamera(ptr, camera);
-  const hit = ray.intersectObjects(potGroups, true)[0];
-  if (!hit) { if (focusIdx >= 0 && !layout.portrait) clearFocus(); return; }
-  let o = hit.object; while (o && o.userData.idx === undefined) o = o.parent;
-  if (!o) return;
-  if (o.userData.idx === focusIdx) pet(); else { setFocus(o.userData.idx); refreshUI(); }
+let tool = 'hand';
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), soilPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -SOIL_Y);
+function setRay(e) { ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); }
+function soilPoint(e) { setRay(e); const v = new THREE.Vector3(); return ray.ray.intersectPlane(soilPlane, v) ? v : null; }
+function hitPlant(e) {
+  setRay(e);
+  const hits = ray.intersectObjects(objs.map(o => o.group), true);
+  for (const h of hits) { let x = h.object; while (x && !x.userData.obj) x = x.parent; if (x) return x.userData.obj; }
+  return null;
+}
+let drag = null;
+canvas.addEventListener('pointerdown', e => {
+  if (tool === 'water') {
+    controls.enabled = false; canvas.setPointerCapture(e.pointerId);
+    const pt = soilPoint(e); if (pt) canTarget.copy(pt);
+    objs.forEach(o => o.boosted = false); watering = true; drag = { type: 'water' }; hideBubble(); return;
+  }
+  const o = hitPlant(e);
+  if (o) { controls.enabled = false; canvas.setPointerCapture(e.pointerId); drag = { type: 'plant', o, x: e.clientX, y: e.clientY, moved: false }; }
+  else drag = { type: 'view', x: e.clientX, y: e.clientY };
+}, { capture: true });
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (drag.type === 'water') { const pt = soilPoint(e); if (pt) canTarget.copy(pt); return; }
+  if (drag.type !== 'plant') return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 7) return;
+  drag.moved = true; hideBubble();
+  const pt = soilPoint(e); if (!pt) return;
+  const o = drag.o, d = Math.hypot(pt.x, pt.z);
+  drag.out = d > BED_R + 0.3;
+  if (!drag.out && d > BED_R - 0.1) { pt.x *= (BED_R - 0.1) / d; pt.z *= (BED_R - 0.1) / d; }
+  o.group.position.set(pt.x, SOIL_Y + (drag.out ? 0.12 : 0.05), pt.z);
+  setHint(drag.out ? '여기서 놓으면 정원에서 뽑혀요' : null);
 });
-addEventListener('keydown', e => { if (e.key === 'Escape') clearFocus(); });
+function endDrag(e) {
+  if (!drag) return;
+  const d = drag; drag = null; controls.enabled = true;
+  if (d.type === 'water') { watering = false; saveState(state); return; }
+  if (d.type === 'view') { if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) hideBubble(); return; }
+  const o = d.o;
+  if (!d.moved) { petPlant(o); return; }
+  if (d.out) { removeObj(o); toast('🌱 정원에서 뽑았어요'); setHint(); return; }
+  o.p.x = o.group.position.x; o.p.z = o.group.position.z; o.group.position.y = SOIL_Y; saveState(state); setHint();
+}
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+
+function petPlant(o) {
+  o.wob = 1; showBubble(o);
+  const [x, y] = screenOf(o.group.position.clone().add(new THREE.Vector3(0, o.h * PS + 0.05, 0)));
+  for (let k = 0; k < 3; k++) setTimeout(() => floatFx(['💗', '💕', '✨'][k], x, y), k * 110);
+}
+
+// ---------- UI ----------
+function screenOf(v) { const p = v.clone().project(camera); return [(p.x + 1) / 2 * innerWidth, (1 - p.y) / 2 * innerHeight]; }
+function floatFx(txt, x, y) {
+  const d = document.createElement('div'); d.className = 'fx'; d.textContent = txt;
+  d.style.left = x - 10 + (Math.random() - 0.5) * 40 + 'px'; d.style.top = y + 'px'; document.body.appendChild(d);
+  requestAnimationFrame(() => { d.style.transform = `translateY(-${60 + Math.random() * 30}px)`; d.style.opacity = 0; });
+  setTimeout(() => d.remove(), 1200);
+}
+function floatAt(o, txt) { const [x, y] = screenOf(o.group.position.clone().add(new THREE.Vector3(0, o.h * PS, 0))); floatFx(txt, x, y); }
+function toast(m) { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
+
+let bubbleObj = null, bubbleTime = 0;
+function showBubble(o) { bubbleObj = o; bubbleTime = 4; renderBubble(); $('bubble').classList.add('show'); }
+function hideBubble() { bubbleObj = null; $('bubble').classList.remove('show'); }
+function renderBubble() {
+  const o = bubbleObj; if (!o) return;
+  const p = o.p, st = stageOf(p.g), f = byId[p.id];
+  $('bubble').innerHTML = st === 4
+    ? `<b>${f.name}</b><span>${f.meaning}</span>`
+    : `<b>???</b><span>${STAGES[st]} · ${Math.floor(p.g * 100)}%</span><div class="mb"><i style="width:${Math.round(p.m * 100)}%"></i></div>${p.m < 0.1 ? '<em>목말라요 💧</em>' : ''}`;
+}
+
+function setHint(force) {
+  const h = $('hint');
+  let txt = force;
+  if (!txt) {
+    const sprouts = objs.filter(o => o.p.g < 1).length;
+    if (tool === 'water') txt = '흙 위를 문질러서 물을 줘요';
+    else if (!sprouts) txt = '🌰 씨앗을 뿌려 보세요. 어떤 꽃이 필지는 비밀이에요';
+    else txt = '💧 물을 주며 키워요 · 끌어서 옮기기 · 빈 곳을 끌면 둘러보기';
+  }
+  h.textContent = txt;
+}
+$('tSeed').onclick = scatter;
+$('tWater').onclick = () => {
+  tool = tool === 'water' ? 'hand' : 'water';
+  $('tWater').classList.toggle('on', tool === 'water'); document.body.classList.toggle('water', tool === 'water');
+  setHint();
+};
+
+// 도감 카드
+let snapR = null, snapScene, snapCam; const snapCache = {};
+async function snapshot(f) {
+  if (snapCache[f.id]) return snapCache[f.id];
+  const m = await getModel(f);
+  if (!snapR) {
+    snapR = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    snapR.setSize(360, 360); snapR.setPixelRatio(1); snapR.toneMapping = THREE.NeutralToneMapping;
+    snapScene = new THREE.Scene(); snapScene.add(new THREE.HemisphereLight('#ffffff', '#c8c0b4', 1.7));
+    const d = new THREE.DirectionalLight('#ffffff', 2); d.position.set(1, 2, 3); snapScene.add(d);
+    snapCam = new THREE.PerspectiveCamera(30, 1, 0.1, 20);
+  }
+  const c = m.clone(); snapScene.add(c);
+  const box = new THREE.Box3().setFromObject(c), ctr = box.getCenter(new THREE.Vector3()), sz = box.getSize(new THREE.Vector3());
+  const r = Math.max(sz.x, sz.y) / 2;
+  snapCam.position.set(ctr.x, ctr.y + r * 0.12, ctr.z + r / Math.tan(THREE.MathUtils.degToRad(15)) * 1.04); snapCam.lookAt(ctr);
+  snapR.render(snapScene, snapCam);
+  const url = snapR.domElement.toDataURL('image/png'); snapScene.remove(c);
+  return (snapCache[f.id] = url);
+}
+function cardHTML(f) {
+  const stars = '★'.repeat(f.rarity);
+  return state.owned.includes(f.id)
+    ? `<div class="card" data-id="${f.id}"><div class="img" style="background-color:${f.bg}"></div><div class="lab"><b>FLOWER</b><i>${f.latin}</i><span>${f.name}<small>${stars}</small></span><p>${f.meaning}</p></div></div>`
+    : `<div class="card lock"><div class="img"><span>?</span></div><div class="lab"><b>FLOWER</b><i>· · ·</i><span>아직 만나지 못한 꽃<small>${stars}</small></span><p>&nbsp;</p></div></div>`;
+}
+function fillImages(root) {
+  root.querySelectorAll('.card[data-id]').forEach(el => snapshot(byId[el.dataset.id]).then(u => el.querySelector('.img').style.backgroundImage = `url(${u})`).catch(() => {}));
+}
+function updateDexCount() { $('dexCount').textContent = `${state.owned.length}/${FLOWERS.length}`; }
+$('tDex').onclick = () => {
+  const g = $('dexGrid'); g.innerHTML = FLOWERS.map(cardHTML).join(''); fillImages(g);
+  $('dexSub').textContent = `${state.owned.length} / ${FLOWERS.length}`; $('dex').classList.add('show');
+};
+$('dexClose').onclick = () => $('dex').classList.remove('show');
+$('dex').onclick = e => { if (e.target.id === 'dex') $('dex').classList.remove('show'); };
+
+const revealQ = [];
+function queueReveal(f, kind) { revealQ.push({ f, kind }); if (!$('reveal').classList.contains('show')) nextReveal(); }
+function nextReveal() {
+  const r = revealQ.shift(); if (!r) { $('reveal').classList.remove('show'); return; }
+  $('revealCap').textContent = r.kind === 'gift' ? 'A Gift for You' : 'New Flower';
+  $('revealTitle').innerHTML = r.kind === 'gift' ? '정원에 온 걸 환영해요<br>첫 꽃을 선물할게요' : '새로운 꽃을 만났어요';
+  $('revealCard').innerHTML = cardHTML(r.f); fillImages($('revealCard'));
+  $('revealOk').textContent = r.kind === 'gift' ? '고마워요' : '도감에 담기';
+  $('reveal').classList.add('show');
+}
+$('revealOk').onclick = nextReveal;
+
+$('openInfo').onclick = () => $('infoCard').classList.add('show');
+$('closeInfo').onclick = () => $('infoCard').classList.remove('show');
+$('infoCard').onclick = e => { if (e.target.id === 'infoCard') $('infoCard').classList.remove('show'); };
+
+// ---------- 카메라 맞추기 ----------
+function frame() {
+  const a = innerWidth / innerHeight; camera.aspect = a; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight, false);
+  const v = THREE.MathUtils.degToRad(camera.fov) / 2;
+  const d = Math.max(4.5 / 2 / Math.tan(v), 3.7 / 2 / (Math.tan(v) * a));
+  controls.minDistance = d * 0.55; controls.maxDistance = d * 1.35;
+  scene.fog.near = d * 1.0; scene.fog.far = d * 2.6; // 화면이 좁아 카메라가 멀어져도 안개가 덮지 않게
+  return d;
+}
+addEventListener('resize', () => { frame(); controls.update(); });
 
 // ---------- 루프 ----------
-const clock = new THREE.Clock();
-let tickAcc = 0;
+const clock = new THREE.Clock(); let acc = 0;
 function loop() {
   const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
-  // 카메라 이동
-  const k = 1 - Math.pow(0.0015, dt);
-  view.curPos.lerp(view.pos, k); view.curTgt.lerp(view.tgt, k);
-  camera.position.copy(view.curPos); camera.lookAt(view.curTgt);
-
-  potGroups.forEach((G, i) => {
-    const ud = G.userData, p = state.plants[FLOWERS[i].id];
-    // 살랑살랑 + 쓰다듬기 흔들림
-    ud.wobble = Math.max(0, ud.wobble - dt * 1.2);
-    ud.plant.rotation.z = Math.sin(t * 1.3 + i) * 0.02 + Math.sin(t * 14) * 0.12 * ud.wobble;
-    ud.plant.rotation.x = Math.sin(t * 0.9 + i * 2) * 0.012;
-    // 흙 색 = 수분
-    ud.soil.material.color.copy(srgb('#9b7351')).lerp(srgb('#4f3523'), Math.min(1, p.m));
-    if (ud.bloomAnim !== undefined && ud.head) {
-      ud.bloomAnim = Math.min(1, ud.bloomAnim + dt * 1.1);
-      const x = ud.bloomAnim, e = x === 1 ? 1 : 1 - Math.pow(2, -9 * x) * Math.cos(x * 9);
-      ud.head.scale.setScalar(Math.max(0.01, e));
-      if (x === 1) delete ud.bloomAnim;
+  controls.update();
+  const az = controls.getAzimuthalAngle();
+  objs.forEach(o => {
+    const p = o.p;
+    if (o.fallY !== undefined) {
+      o.fallV -= 6 * dt; o.fallY += o.fallV * dt;
+      if (o.fallY <= 0) { if (o.fallV < -1) { o.fallY = 0; o.fallV *= -0.3; } else { o.fallY = 0; delete o.fallY; } }
+      o.plantG.position.y = o.fallY || 0;
     }
-    // 이름표
-    const [sx, sy] = screenOf(G.position.clone().add(new THREE.Vector3(0, -0.05, 0.2)));
-    tags[i].style.left = sx + 'px'; tags[i].style.top = sy + 'px';
-    tags[i].style.opacity = focusIdx < 0 ? 1 : 0;
+    o.wob = Math.max(0, o.wob - dt * 1.2);
+    const thirsty = p.m < 0.06 && p.g < 1 && p.g >= 0.1;
+    o.plantG.rotation.z = Math.sin(t * 1.3 + o.sd) * 0.02 + Math.sin(t * 14) * 0.14 * o.wob;
+    o.plantG.rotation.x += ((thirsty ? 0.35 : 0) - o.plantG.rotation.x) * Math.min(1, dt * 3);
+    o.wet.material.opacity = p.m * 0.5;
+    if (o.head) {
+      o.head.rotation.y = az; // 꽃은 늘 나를 바라봐요
+      if (o.bloomAnim !== undefined) {
+        o.bloomAnim = Math.min(1, o.bloomAnim + dt * 1.1);
+        const x = o.bloomAnim; o.head.scale.setScalar(Math.max(0.01, x === 1 ? 1 : 1 - Math.pow(2, -9 * x) * Math.cos(x * 9)));
+        if (x === 1) delete o.bloomAnim;
+      }
+    }
   });
-
   // 물뿌리개
-  if (canAnim) {
-    const G = potGroups[canAnim.i];
-    canAnim.t += dt;
-    const a = canAnim.t;
-    can.visible = true;
-    const base = G.position.clone().add(new THREE.Vector3(0.24, G.userData.def.h + 0.32, 0.05));
-    can.position.copy(base).add(new THREE.Vector3(0, Math.max(0, 0.4 - a) * 0.4, 0));
-    const tilt = a < 0.4 ? a / 0.4 : a < 1.7 ? 1 : Math.max(0, 1 - (a - 1.7) / 0.4);
-    can.rotation.z = tilt * 0.7;
-    if (a > 0.4 && a < 1.7) for (let q = 0; q < 3; q++) {
-      const d = new THREE.Mesh(dropGeo, dropMat);
-      d.position.copy(can.localToWorld(new THREE.Vector3(-0.19, 0.085, (Math.random() - 0.5) * 0.03)));
-      d.userData = { v: new THREE.Vector3(-0.25 + Math.random() * 0.1, 0, (Math.random() - 0.5) * 0.05), floor: G.position.y + G.userData.def.soil[1] };
-      scene.add(d); drops.push(d);
-    }
-    if (a > 2.2) {
-      can.visible = false;
-      const i = canAnim.i, over = canAnim.over, prev = canAnim.prevSt; canAnim = null;
-      afterGrowth(i, prev, true);
-      if (over) toast('물을 너무 많이 줬어요. 조금 기다려 주세요');
+  canTilt += ((watering ? 1 : 0) - canTilt) * Math.min(1, dt * 8);
+  can.visible = canTilt > 0.02;
+  if (can.visible) {
+    can.position.lerp(canTarget.clone().add(new THREE.Vector3(0.2, 0.42, 0.05)), Math.min(1, dt * 14));
+    can.rotation.z = canTilt * 0.75;
+    if (watering) {
+      for (let q = 0; q < 3; q++) {
+        const d = new THREE.Mesh(dropGeo, dropMat);
+        d.position.copy(can.localToWorld(new THREE.Vector3(-0.19, 0.085, (Math.random() - 0.5) * 0.04)));
+        d.userData.v = new THREE.Vector3(-0.2 + Math.random() * 0.1, 0, (Math.random() - 0.5) * 0.06);
+        scene.add(d); drops.push(d);
+      }
+      objs.forEach(o => { if (Math.hypot(o.p.x - canTarget.x, o.p.z - canTarget.z) < 0.32) waterPlant(o, dt); });
     }
   }
   for (let q = drops.length - 1; q >= 0; q--) {
-    const d = drops[q]; d.userData.v.y -= 9.8 * dt * 0.35; d.position.addScaledVector(d.userData.v, dt);
-    if (d.position.y < d.userData.floor) { scene.remove(d); drops.splice(q, 1); }
+    const d = drops[q]; d.userData.v.y -= 3.4 * dt; d.position.addScaledVector(d.userData.v, dt);
+    if (d.position.y < SOIL_Y) { scene.remove(d); drops.splice(q, 1); }
   }
-
-  // 시간이 흐르며 자라고 마름 (2초마다)
-  tickAcc += dt;
-  if (tickAcc > 2) {
-    const mins = tickAcc / 60; tickAcc = 0;
-    FLOWERS.forEach((f, i) => {
-      const p = state.plants[f.id], prev = stageOf(p.g), wasSad = p.m < 0.12 || p.m > WET_MAX;
-      tickPlant(p, mins); p.t = now();
-      const isSad = p.m < 0.12 || p.m > WET_MAX;
-      if (stageOf(p.g) !== prev || Math.abs(Math.round(p.g * 200) - potGroups[i].userData.built) >= 2 || wasSad !== isSad) afterGrowth(i, prev, wasSad !== isSad);
-    });
-    saveState(state); refreshUI();
+  // 말풍선
+  if (bubbleObj) {
+    const [x, y] = screenOf(bubbleObj.group.position.clone().add(new THREE.Vector3(0, bubbleObj.h * PS + 0.1, 0)));
+    const b = $('bubble'); b.style.left = x + 'px'; b.style.top = y + 'px';
+    bubbleTime -= dt; if (bubbleTime < 0) hideBubble();
+  }
+  // 1초마다 자라고 마르기
+  acc += dt;
+  if (acc >= 1) {
+    const si = sunInfo(state.sun);
+    objs.forEach(o => { tick(o.p, acc, si); refreshPlant(o); });
+    acc = 0; state.t = Date.now(); saveState(state);
+    if (bubbleObj) renderBubble();
   }
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
 
-addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight); doLayout();
-});
-
 // ---------- 시작 ----------
-camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-doLayout(); view.curPos.copy(view.pos).add(new THREE.Vector3(0, 0.6, 1.2)); view.curTgt.copy(view.tgt);
-const needed = FLOWERS.filter(f => state.plants[f.id].g >= 1);
-let loaded = 0;
-const bar = document.querySelector('#loading .pg i');
-const finish = () => { $('loading').style.opacity = 0; setTimeout(() => $('loading').remove(), 600); };
-Promise.all(needed.map(f => getModel(f).then(() => { loaded++; bar.style.width = (loaded / needed.length * 100) + '%'; }).catch(() => {})))
-  .then(() => {
-    FLOWERS.forEach((f, i) => buildPlant(i)); refreshUI(); finish(); loop();
-    setTimeout(() => FLOWERS.forEach(f => getModel(f).catch(() => {})), 1500); // 나머지는 미리 받아두기
-  });
-if (!needed.length) bar.style.width = '100%';
-</script>
-<div id="infoCard"><div class="box">
-  <h3>나의 정원</h3>
-  <p>만든 사람 · 민경</p>
-  <div class="row">의견은 인스타 DM으로 주세요 💌<br><a class="insta" href="https://instagram.com/i0k.zip" target="_blank" rel="noopener">@i0k.zip</a></div>
-  <div class="row">후원해 주시면 꽃이 더 많이 피어요 🌷<a id="payLink" href="https://qr.kakaopay.com/FZ946M6xm" target="_blank" rel="noopener">카카오페이로 후원하기</a></div>
-  <button id="closeInfo">닫기</button>
-</div></div>
-<script>
-(function(){
-  var c=document.getElementById('infoCard');
-  document.getElementById('openInfo').onclick=function(){c.classList.add('show')};
-  document.getElementById('closeInfo').onclick=function(){c.classList.remove('show')};
-  c.onclick=function(e){if(e.target===c)c.classList.remove('show')};
-})();
+applySun();
+const d0 = frame();
+camera.position.set(0, controls.target.y + d0 * Math.cos(0.95), d0 * Math.sin(0.95));
+state.plants.forEach(p => { if (byId[p.id]) addObj(p, false); });
+updateDexCount(); setHint();
+Promise.all(objs.filter(o => o.p.g >= 1).map(o => getModel(byId[o.p.id]).catch(() => {}))).then(() => {
+  $('loading').style.opacity = 0; setTimeout(() => $('loading').remove(), 600);
+  loop();
+  if (giftId) queueReveal(byId[giftId], 'gift');
+  objs.forEach(o => { if (o.p.g >= 1 && !state.owned.includes(o.p.id)) { state.owned.push(o.p.id); queueReveal(byId[o.p.id], 'new'); } });
+  saveState(state); updateDexCount();
+  setTimeout(() => FLOWERS.forEach(f => getModel(f).catch(() => {})), 1500);
+});
 </script>
 </body>
 </html>
